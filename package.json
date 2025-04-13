@@ -1,0 +1,22 @@
+{
+  "name": "ticketing-system",
+  "version": "1.0.0",
+  "description": "Project Overview:\r This project is an Online Event Ticketing System that allows users to:",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+    
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamedelgeng/Ticketing-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mohamedelgeng/Ticketing-System/issues"
+  },
+  "homepage": "https://github.com/mohamedelgeng/Ticketing-System#readme"
+}
