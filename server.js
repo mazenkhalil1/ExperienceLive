@@ -28,10 +28,10 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-const courseRouter = require("./Routes/course");
-const userRouter = require("./Routes/user");
-const authRouter = require("./Routes/auth");
-const authenticationMiddleware=require('./middleware/authenticationmiddleware')
+//const courseRouter = require("./Routes/course");
+//const userRouter = require("./Routes/user");
+//const authRouter = require("./Routes/auth");
+//const authenticationMiddleware=require('./middleware/authenticationmiddleware')
 
 
 app.use(express.json());
