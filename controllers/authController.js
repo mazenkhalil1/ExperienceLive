@@ -8,7 +8,7 @@ const register = async (req, res) => {
         const { email, password, name, role, age } = req.body;
   
         // Check if the user already exists
-        const existingUser = await userModel.findOne({ email });
+        const existingUser = await User.findOne({ email });
         if (existingUser) {
           return res.status(409).json({ message: "User already exists" });
         }
@@ -17,7 +17,7 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
   
         // Create a new user
-        const newUser = new userModel({
+        const newUser = new User({
           email,
           password: hashedPassword,
           name,
