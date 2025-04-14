@@ -1,4 +1,4 @@
-const Event = require('../models/Event');
+/*const Event = require('../models/Event');
 
 const getEventAnalytics = async (req, res) => {
   try {
@@ -36,4 +36,4 @@ const getEventById = async (req, res) => {
     }
   };
   
-  module.exports = { getEventById };
+  module.exports = { getEventById }; */
