@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require('dotenv');
@@ -29,7 +23,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 //const courseRouter = require("./Routes/course");
-const userRouter = require("./Routes/userRoutes");
+const userRouter = require("./Routes/usersRoutes");
 const authRoutes = require("./Routes/authRoutes");
 //const authenticationMiddleware=require('./middleware/authenticationmiddleware')
 
@@ -49,8 +43,9 @@ app.use(
 
 
 
-
 app.use("/api/v1", authRoutes);
+
+//app.use("/api/v1", authRoutes);
 
 
 

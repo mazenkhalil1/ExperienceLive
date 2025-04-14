@@ -1,4 +1,4 @@
-const Booking = require('../models/Booking');
+/*const Booking = require('../models/Booking');
 const Event = require('../models/Event');
 
 // Book tickets
@@ -59,4 +59,4 @@ exports.cancelBooking = async (req, res) => {
 
   await booking.remove();
   res.json({ message: 'Booking cancelled and tickets restored' });
-};
+};*/
