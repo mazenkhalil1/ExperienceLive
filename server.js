@@ -52,6 +52,26 @@ app.use(
 
 app.use("/api/v1", authRoutes);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //app.use(authenticationMiddleware);
 
 
