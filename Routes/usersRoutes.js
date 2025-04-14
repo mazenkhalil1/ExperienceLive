@@ -5,4 +5,13 @@ const { verifyToken, verifyOrganizer } = require('../middleware/auth');
 
 router.get('/events/analytics', verifyToken, verifyOrganizer, getEventAnalytics);
 
+
+const userController = require("../controllers/userController");
+const authorizationMiddleware=require('../middleware/authorizationmiddleware');
+const bookingController = require("../controllers/bookingController");
+const eventController = require("../controllers/eventController");
+
+
 module.exports = router;
+
+router.get('/', protect, authorizeRoles('admin'), userController.getAllUsers);
