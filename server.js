@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 //const courseRouter = require("./Routes/course");
-const userRouter = require("./Routes/userRoutes");
+const userRouter = require("./Routes/usersRoutes");
 const authRoutes = require("./Routes/authRoutes");
 //const authenticationMiddleware=require('./middleware/authenticationmiddleware')
 
