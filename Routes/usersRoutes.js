@@ -3,7 +3,7 @@ const express = require('express');
 //const { getEventAnalytics } = require('../controllers/eventController');
 //const { verifyToken, verifyOrganizer } = require('../middleware/auth');
 
-router.get('/events/analytics', verifyToken, verifyOrganizer, getEventAnalytics);
+//router.get('/events/analytics', verifyToken, verifyOrganizer, getEventAnalytics);
 
 
 const userController = require("../controllers/userController");
