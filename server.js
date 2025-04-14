@@ -8,15 +8,15 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require('dotenv');
-const cookieParser=require('cookie-parser')
+//const cookieParser=require('cookie-parser')
 const cors = require("cors");
 
 dotenv.config();
 
 const app = express();
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+  //useNewUrlParser: true,
+ // useUnifiedTopology: true,
 })
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection failed:', err));
@@ -28,16 +28,16 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-const courseRouter = require("./Routes/course");
-const userRouter = require("./Routes/user");
-const authRouter = require("./Routes/auth");
-const authenticationMiddleware=require('./middleware/authenticationmiddleware')
+//const courseRouter = require("./Routes/course");
+//const userRouter = require("./Routes/user");
+//const authRouter = require("./Routes/auth");
+//const authenticationMiddleware=require('./middleware/authenticationmiddleware')
 
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(cookieParser())
+//app.use(cookieParser())
 
 app.use(
   cors({
@@ -50,13 +50,13 @@ app.use(
 
 
 
-app.use("/api/v1", authRouter);
+//app.use("/api/v1", authRouter);
 
-app.use(authenticationMiddleware);
+//app.use(authenticationMiddleware);
 
 
-app.use("/api/v1/courses", courseRouter);
-app.use("/api/v1/users", userRouter);
+//app.use("/api/v1/courses", courseRouter);
+//app.use("/api/v1/users", userRouter);
 
 //const db_name = process.env.DB_NAME;
 // * Cloud Connection
