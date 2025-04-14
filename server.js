@@ -8,7 +8,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require('dotenv');
-const cookieParser=require('cookie-parser')
+//const cookieParser=require('cookie-parser')
 const cors = require("cors");
 
 dotenv.config();
@@ -37,7 +37,7 @@ const authenticationMiddleware=require('./middleware/authenticationmiddleware')
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(cookieParser())
+//app.use(cookieParser())
 
 app.use(
   cors({
