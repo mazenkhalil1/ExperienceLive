@@ -50,13 +50,13 @@ app.use(
 
 
 
-app.use("/api/v1", authRouter);
+//app.use("/api/v1", authRouter);
 
-app.use(authenticationMiddleware);
+//app.use(authenticationMiddleware);
 
 
-app.use("/api/v1/courses", courseRouter);
-app.use("/api/v1/users", userRouter);
+//app.use("/api/v1/courses", courseRouter);
+//app.use("/api/v1/users", userRouter);
 
 //const db_name = process.env.DB_NAME;
 // * Cloud Connection
