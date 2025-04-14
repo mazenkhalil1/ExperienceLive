@@ -3,43 +3,25 @@ const UserModel = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const register = async (req, res) => {
-    try {
-        const { name, email, password, role } = req.body;
 
-        // Check if user already exists
-        const existingUser = await UserModel.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
+// Teammate A - Register
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
 
-        // Validate role
-        const validRoles = ['Standard User', 'Organizer', 'Admin'];
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({ message: 'Invalid role' });
-        }
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ error: 'Email exists' });
 
-        // Hash the password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ name, email, password: hashedPassword, role });
+    await user.save();
 
-        // Create new user
-        const newUser = new UserModel({
-            name,
-            email,
-            password: hashedPassword,
-            role,
-        });
-
-        await newUser.save();
-
-        res.status(201).json({ message: 'User registered successfully' });
-
-    } catch (err) {
-        console.error('Error in register function:', err); // Log the error
-        res.status(500).json({ message: 'Server error', error: err.message });
-    }
+    res.status(201).json({ message: 'User registered' });
+  } catch {
+    res.status(500).json({ error: 'Registration failed' });
+  }
 };
+
 
 const login = async (req, res) => {
     try {
