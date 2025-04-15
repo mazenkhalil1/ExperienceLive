@@ -8,7 +8,7 @@ const express = require('express');
 
 const userController = require("../controllers/userController");
 const authorizationMiddleware=require('../middleware/authorizationmiddleware');
-const authMiddleware = require("../middleware/authenticationMiddleware");
+const authMiddleware = require("../middleware/authenticationmiddleware");
 const bookingController = require("../controllers/bookingController");
 const eventController = require("../controllers/eventController");
 const router = express.Router();
