@@ -22,7 +22,6 @@ const register = async (req, res) => {
           password: hashedPassword,
           name,
           role,
-          age,
         });
   
         // Save the user to the database
