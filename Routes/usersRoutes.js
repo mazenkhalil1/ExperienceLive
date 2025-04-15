@@ -14,6 +14,9 @@ const router = express.Router();
 
 module.exports = router;
 
+router.delete('/:id', protect, isAdmin, deleteUser);
+
+
 
 
 
