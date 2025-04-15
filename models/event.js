@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const EventSchema = new mongoose.Schema({
+const eventSchema = new mongoose.Schema({
   title: String,
   description: String,
   date: Date,
@@ -8,10 +8,19 @@ const EventSchema = new mongoose.Schema({
   category: String,
   image: String,
   price: Number,
+
   totalTickets: Number,
   remainingTickets: Number,
-  organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+  status: {
+    type: String,
+    enum: ["pending", "approved", "declined"],
+    default: "pending"
+  },
+
+  organizer: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Your original field
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // For admin/ownership control
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Event', EventSchema);
+module.exports = mongoose.model("Event", eventSchema);
