@@ -37,3 +37,35 @@ const getEventById = async (req, res) => {
   };
   
   module.exports = { getEventById }; */
+
+
+  const deleteEvent = async (req, res) => {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+  
+    // Only the organizer or an admin can delete
+    if (String(event.organizer) !== String(req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+  
+    await event.deleteOne();
+    res.json({ message: 'Event deleted' });
+  };
+1  
+
+const createEvent = async (req, res) => {
+  const { title, description, date, location, totalTickets, price } = req.body;
+
+  const event = await Event.create({
+    title,
+    description,
+    date,
+    location,
+    totalTickets,
+    remainingTickets: totalTickets,
+    price,
+    organizer: req.user._id
+  });
+
+  res.status(201).json(event);
+};
