@@ -2,11 +2,15 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require('dotenv');
+const userRouter = require("./Routes/usersRoutes");
+const authRoutes = require("./Routes/authRoutes");
 //const cookieParser=require('cookie-parser')
 
 dotenv.config();
 
 const app = express();
+app.use(express.json());
+
 mongoose.connect(process.env.MONGO_URI, {
   //useNewUrlParser: true,
  // useUnifiedTopology: true,
@@ -14,11 +18,10 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection failed:', err));
 
-const userRouter = require("./Routes/usersRoutes");
-const authRoutes = require("./Routes/authRoutes");
 
 
-app.use(express.json());
+
+
 
 //app.use(cookieParser())
 app.use('/api/v1',authRoutes);
