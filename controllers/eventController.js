@@ -37,3 +37,29 @@ const getEventById = async (req, res) => {
   };
   
   module.exports = { getEventById }; */
+  const eventModel = require("../models/eventModel");
+
+exports.updateEvent = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const updates = req.body;
+
+    const updatedEvent = await eventModel.findByIdAndUpdate(
+      eventId,
+      updates,
+      { new: true }
+    );
+
+    if (!updatedEvent) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.status(200).json({
+      message: "Event updated successfully",
+      event: updatedEvent
+    });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
