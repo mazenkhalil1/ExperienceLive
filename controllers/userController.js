@@ -1,11 +1,12 @@
 const User = require("../models/User");
 const userModel = require("../models/User");
 const booking2Model = require("../models/booking2");
-//const eventModel = require("../models/event");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const secretKey = process.env.SECRET_KEY;
 const bcrypt = require("bcrypt");
+
+// Update user role (admin only)
 exports.updateUserRole = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -39,38 +40,32 @@ exports.updateUserRole = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-const userController = {
-  register: async (req, res) => {
-    try {
-      const { email, password, name, role, age } = req.body;
 
-      // Check if the user already exists
-      const existingUser = await userModel.findOne({ email });
-      if (existingUser) {
-        return res.status(409).json({ message: "User already exists" });
-      }
+// Register new user
+exports.register = async (req, res) => {
+  try {
+    const { email, password, name, role, age } = req.body;
 
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Create a new user
-      const newUser = new userModel({
-        email,
-        password: hashedPassword,
-        name,
-        role,
-        age,
-      });
-
-      // Save the user to the database
-      await newUser.save();
-
-      res.status(201).json({ message: "User registered successfully" });
-    } catch (error) {
-      console.error("Error registering user:", error);
-      res.status(500).json({ message: "Server error" });
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "User already exists" });
     }
-  },
-}
 
-module.exports = userController;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new userModel({
+      email,
+      password: hashedPassword,
+      name,
+      role,
+      age,
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    console.error("Error registering user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
