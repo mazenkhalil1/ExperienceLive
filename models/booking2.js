@@ -1,11 +1,10 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  event: { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true },
-  numTickets: { type: Number, required: true },
-  totalPrice: { type: Number, required: true },
-  status: { type: String, enum: ["pending", "confirmed", "canceled"], default: "pending" }
-}, { timestamps: true });
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
+  tickets: Number,
+  totalPrice: Number
+});
 
-module.exports = mongoose.model("Booking", bookingSchema);
+module.exports = mongoose.model('Booking', bookingSchema);

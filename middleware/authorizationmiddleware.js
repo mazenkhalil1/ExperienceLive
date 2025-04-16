@@ -1,10 +1,8 @@
-module.exports= function authorizationMiddleware(roles) {
-    return (req, res, next) => {
-      console.log('req:',req.user)
-      const userRole = req.user.role;
-      if (!roles.includes(userRole))
-        return res.status(403).json("unauthorized access");
-      // console.log('authormid')
-      next();
-    };
+const authorize = (roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) {
+    return res.status(403).json({ message: 'Forbidden: Insufficient role' });
   }
+  next();
+};
+
+module.exports = { authorize };
