@@ -6,7 +6,6 @@ require("dotenv").config();
 const secretKey = process.env.SECRET_KEY;
 const bcrypt = require("bcrypt");
 
-// Update user role (admin only)
 exports.updateUserRole = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -16,32 +15,23 @@ exports.updateUserRole = async (req, res) => {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { role },
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(userId, { role }, { new: true });
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({
-      message: "User role updated successfully",
-      user: {
-        id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role
-      }
-    });
+    res.status(200).json({ message: "User role updated", user: updatedUser });
   } catch (error) {
-    console.error("Error updating user role:", error);
+    console.error("Update role error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// Register new user
+exports.deleteUser = async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+  await user.deleteOne();
+  res.json({ message: "User deleted" });
+};
+
 exports.register = async (req, res) => {
   try {
     const { email, password, name, role, age } = req.body;

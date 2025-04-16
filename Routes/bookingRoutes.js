@@ -14,5 +14,6 @@ router.post('/', authenticate, authorize('user'), bookTicket);
 router.get('/', authenticate, authorize('user'), getMyBookings);
 router.get('/:id', authenticate, authorize('user'), getBookingById);
 router.delete('/:id', authenticate, authorize('user'), cancelBooking);
+//router.delete('/:id', cancelBooking);
 
 module.exports = router;

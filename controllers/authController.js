@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const authController = {
+  // Login
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -24,6 +25,7 @@ const authController = {
     }
   },
 
+  // Register
   register: async (req, res) => {
     try {
       const { email, password, name, role, age } = req.body;
@@ -41,6 +43,7 @@ const authController = {
     }
   },
 
+  // Forgot password
   forgetPassword: async (req, res) => {
     try {
       const { email, newPassword } = req.body;
@@ -59,4 +62,4 @@ const authController = {
   }
 };
 
-module.exports = authController;
+module.exports = authController;`
