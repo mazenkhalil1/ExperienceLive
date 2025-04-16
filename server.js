@@ -4,7 +4,6 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 const app = express();
-
 app.use(express.json());
 
 // Connect to MongoDB
