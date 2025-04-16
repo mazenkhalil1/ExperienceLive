@@ -6,8 +6,8 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const secretKey = process.env.SECRET_KEY;
 const bcrypt = require("bcrypt");
-const userController = {
-  register: async (req, res) => {
+ /*const userController = {
+ register: async (req, res) => {
     try {
       const { email, password, name, role, age } = req.body;
 
@@ -40,4 +40,4 @@ const userController = {
   },
 }
 
-module.exports = userController;
+module.exports = userController;*/
