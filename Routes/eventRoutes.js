@@ -1,22 +1,19 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const {
-  getAllEvents,
-  getEventById,
-  createEvent,
-  updateEvent,
-  deleteEvent
-} = require('../controllers/eventController');
-const { protect } = require('../middleware/authenticationMiddleware');
-const { authorize } = require('../middleware/authorizationmiddleware');
+const eventController = require("../controllers/eventController");
+const authMiddleware = require("../middleware/authenticationmiddleware");
+const authorize = require("../middleware/authorizationmiddleware");
 
 // Public routes
-router.get('/', getAllEvents);
-router.get('/:id', getEventById);
+router.get("/", eventController.getEvents);
+router.get("/:id", eventController.getEvent);
 
-// Organizer/Admin routes
-router.post('/', protect, authorize(['organizer']), createEvent);
-router.put('/:id', protect, authorize(['organizer', 'admin']), updateEvent);
-router.delete('/:id', protect, authorize(['organizer', 'admin']), deleteEvent);
+// Organizer routes
+router.post("/", authMiddleware, authorize(["organizer"]), eventController.createEvent);
+router.put("/:id", authMiddleware, authorize(["organizer"]), eventController.updateEvent);
+router.delete("/:id", authMiddleware, authorize(["organizer"]), eventController.deleteEvent);
+
+// Admin routes
+router.put("/:id/status", authMiddleware, authorize(["admin"]), eventController.updateEventStatus);
 
 module.exports = router;

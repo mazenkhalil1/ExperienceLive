@@ -1,112 +1,189 @@
-const Event = require('../models/Event');
+const Event = require("../models/event");
+const Booking = require("../models/Booking");
 
-// Create a new event
-const createEvent = async (req, res) => {
+// Create new event
+exports.createEvent = async (req, res, next) => {
   try {
-    const { title, description, date, location, totalTickets, price } = req.body;
-
-    const event = await Event.create({
-      title,
-      description,
-      date,
-      location,
-      totalTickets,
-      remainingTickets: totalTickets,
-      price,
-      organizer: req.user._id
+    const event = new Event({
+      ...req.body,
+      organizer: req.user.id,
+      status: "pending"
     });
 
-    res.status(201).json(event);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to create event', error });
-  }
-};
-
-// Get one event by ID
-const getEventById = async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ message: 'Event not found' });
-    res.status(200).json(event);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch event', error });
-  }
-};
-
-// Update an event
-const updateEvent = async (req, res) => {
-  try {
-    const eventId = req.params.id;
-    const updates = req.body;
-
-    const updatedEvent = await Event.findByIdAndUpdate(eventId, updates, { new: true });
-
-    if (!updatedEvent) return res.status(404).json({ message: 'Event not found' });
-
-    res.status(200).json({
-      message: "Event updated successfully",
-      event: updatedEvent
+    await event.save();
+    res.status(201).json({
+      success: true,
+      data: event
     });
-  } catch (error) {
-    console.error("Error updating event:", error);
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    next(err);
   }
 };
 
-// Delete an event
-const deleteEvent = async (req, res) => {
+// Get all events
+exports.getEvents = async (req, res, next) => {
   try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ message: 'Event not found' });
+    const events = await Event.find()
+      .populate("organizer", "name email")
+      .sort("-date");
 
-    if (String(event.organizer) !== String(req.user._id) && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Forbidden' });
+    res.json({
+      success: true,
+      count: events.length,
+      data: events
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get single event
+exports.getEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id)
+      .populate("organizer", "name email");
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found"
+      });
     }
 
-    await event.deleteOne();
-    res.json({ message: 'Event deleted' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.json({
+      success: true,
+      data: event
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
-// Analytics for organizer's events
-const getEventAnalytics = async (req, res) => {
+// Update event
+exports.updateEvent = async (req, res, next) => {
+  try {
+    let event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found"
+      });
+    }
+
+    // Check if user is organizer or admin
+    if (event.organizer.toString() !== req.user.id && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this event"
+      });
+    }
+
+    // Only allow updating specific fields
+    const allowedUpdates = ["title", "description", "date", "location", "price", "totalTickets", "category", "image"];
+    const updates = Object.keys(req.body)
+      .filter(key => allowedUpdates.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = req.body[key];
+        return obj;
+      }, {});
+
+    event = await Event.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      runValidators: true
+    });
+
+    res.json({
+      success: true,
+      data: event
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Delete event
+exports.deleteEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found"
+      });
+    }
+
+    // Check if user is organizer or admin
+    if (event.organizer.toString() !== req.user.id && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this event"
+      });
+    }
+
+    await event.remove();
+    res.json({
+      success: true,
+      data: {}
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get event analytics
+exports.getEventAnalytics = async (req, res, next) => {
   try {
     const events = await Event.find({ organizer: req.user.id });
 
-    const analytics = events.map(event => {
-      const booked = event.totalTickets - event.remainingTickets;
-      const percentBooked = ((booked / event.totalTickets) * 100).toFixed(2);
-      return {
+    // Update analytics for each event
+    for (let event of events) {
+      await event.updateAnalytics();
+    }
+
+    res.json({
+      success: true,
+      data: events.map(event => ({
+        id: event._id,
         title: event.title,
-        percentBooked: percentBooked + '%',
-        totalTickets: event.totalTickets,
-        booked
-      };
+        analytics: event.analytics
+      }))
     });
-
-    res.status(200).json(analytics);
-  } catch (error) {
-    res.status(500).json({ message: 'Analytics fetch failed', error });
+  } catch (err) {
+    next(err);
   }
 };
 
-// Get all approved events
-const getAllEvents = async (req, res) => {
+// Approve/Reject event (Admin only)
+exports.updateEventStatus = async (req, res, next) => {
   try {
-    const events = await Event.find({ status: 'approved' });
-    res.json(events);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch events' });
-  }
-};
+    const { status } = req.body;
 
-module.exports = {
-  createEvent,
-  getEventById,
-  updateEvent,
-  deleteEvent,
-  getEventAnalytics,
-  getAllEvents
+    if (!["approved", "declined"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status"
+      });
+    }
+
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found"
+      });
+    }
+
+    event.status = status;
+    await event.save();
+
+    res.json({
+      success: true,
+      data: event
+    });
+  } catch (err) {
+    next(err);
+  }
 };
