@@ -1,61 +1,163 @@
-const User = require("../models/User");
-const userModel = require("../models/User");
-const booking2Model = require("../models/booking2");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
-const secretKey = process.env.SECRET_KEY;
-const bcrypt = require("bcrypt");
+const User = require("../models/userModel");
+const Booking = require("../models/Booking");
+const Event = require("../models/event");
 
-exports.updateUserRole = async (req, res) => {
+// Get all users (Admin only)
+exports.getUsers = async (req, res, next) => {
   try {
-    const userId = req.params.id;
+    const users = await User.find().select("-password");
+    res.json({
+      success: true,
+      count: users.length,
+      data: users
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get single user (Admin only)
+exports.getUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get current user's profile
+exports.getProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update current user's profile
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const updates = {
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+      address: req.body.address,
+      profilePicture: req.body.profilePicture
+    };
+
+    const user = await User.findByIdAndUpdate(req.user.id, updates, {
+      new: true,
+      runValidators: true
+    }).select("-password");
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update user role (Admin only)
+exports.updateUserRole = async (req, res, next) => {
+  try {
     const { role } = req.body;
 
     if (!["user", "organizer", "admin"].includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role"
+      });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, { role }, { new: true });
-    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true, runValidators: true }
+    ).select("-password");
 
-    res.status(200).json({ message: "User role updated", user: updatedUser });
-  } catch (error) {
-    console.error("Update role error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-exports.deleteUser = async (req, res) => {
-  const user = await User.findById(req.params.id);
-  if (!user) return res.status(404).json({ message: "User not found" });
-  await user.deleteOne();
-  res.json({ message: "User deleted" });
-};
-
-exports.register = async (req, res) => {
-  try {
-    const { email, password, name, role, age } = req.body;
-
-    const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new userModel({
-      email,
-      password: hashedPassword,
-      name,
-      role,
-      age,
+    res.json({
+      success: true,
+      data: user
     });
-
-    await newUser.save();
-
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (error) {
-    console.error("Error registering user:", error);
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    next(err);
   }
+};
+
+// Delete user (Admin only)
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    await user.remove();
+    res.json({
+      success: true,
+      data: {}
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Standard user: View all own bookings
+exports.getUserBookings = async (req, res) => {
+  const bookings = await Booking.find({ user: req.user.userId }).populate("event");
+  res.json(bookings);
+};
+
+// Organizer: View own posted events
+exports.getOrganizerEvents = async (req, res) => {
+  const events = await Event.find({ organizer: req.user.userId });
+  res.json(events);
+};
+
+// Organizer: View analytics on booked tickets
+// This function calculates the percentage of tickets booked for each event created by the organizer
+exports.getEventAnalytics = async (req, res) => {
+  const events = await Event.find({ organizer: req.user.userId });
+  const analytics = events.map(e => ({
+    title: e.title,
+    percentBooked: ((e.totalTickets - e.remainingTickets) / e.totalTickets * 100).toFixed(2) + "%"
+  }));
+  res.json(analytics);
 };
