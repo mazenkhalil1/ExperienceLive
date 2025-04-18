@@ -1,28 +1,30 @@
 const jwt = require("jsonwebtoken");
-const secretKey = process.env.SECRET_KEY
 
-module.exports = function authenticationMiddleware(req, res, next) {
-  const cookie = req.cookies;// if not working then last option req.headers.cookie then extract token
-  console.log('inside auth middleware')
-  // console.log(cookie);
-
-  if (!cookie) {
-    return res.status(401).json({ message: "No Cookie provided" });
-  }
-  const token = cookie.token;
-  if (!token) {
-    return res.status(405).json({ message: "No token provided" });
-  }
-
-  jwt.verify(token, secretKey, (error, decoded) => {
-    if (error) {
-      return res.status(403).json({ message: "Invalid token" });
+module.exports = function (req, res, next) {
+  try {
+    // Check for token in cookies or Authorization header
+    const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ message: "Authentication required" });
     }
 
-    // Attach the decoded user ID to the request object for further use
-    //console.log(decoded.user)
-    
-    req.user = decoded.user;
-    next();
-  });
+    // Verify token
+    jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
+      if (error) {
+        return res.status(403).json({ message: "Invalid or expired token" });
+      }
+
+      // Extract user data and attach to request
+      req.user = {
+        userId: decoded.userId,
+        role: decoded.role
+      };
+      
+      next();
+    });
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return res.status(500).json({ message: "Server error" });
+  }
 };
