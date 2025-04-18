@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      select: false // Don't include password by default in queries
     },
     name: {
       type: String,
@@ -25,8 +24,6 @@ const userSchema = new mongoose.Schema(
       default: 'user',
       required: true
     },
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
     bookings: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Booking'
@@ -40,14 +37,5 @@ const userSchema = new mongoose.Schema(
     timestamps: true
   }
 );
-
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw new Error('Error comparing passwords');
-  }
-};
 
 module.exports = mongoose.model('User', userSchema); 
