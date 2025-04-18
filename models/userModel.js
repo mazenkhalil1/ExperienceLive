@@ -27,6 +27,14 @@ const userSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    resetPasswordOTP: {
+      type: String,
+      select: false
+    },
+    resetPasswordOTPExpires: {
+      type: Date,
+      select: false
+    },
     bookings: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Booking'

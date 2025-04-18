@@ -2,7 +2,6 @@ const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 
 const authController = {
   // POST /api/v1/login
@@ -162,40 +161,25 @@ const authController = {
       }
       
       // Find user
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email }).select('+resetPasswordOTP +resetPasswordOTPExpires');
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Generate reset token
-      const resetToken = crypto.randomBytes(20).toString("hex");
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Save OTP to user document
+      user.resetPasswordOTP = otp;
+      user.resetPasswordOTPExpires = Date.now() + 600000; // 10 minutes
       await user.save();
 
-      // Create reset URL
-      const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-
-      // Send email
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        }
+      // Return OTP in response (for testing purposes)
+      return res.status(200).json({ 
+        message: "OTP generated successfully", 
+        otp: otp,
+        validFor: "10 minutes"
       });
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: user.email,
-        subject: "Password Reset",
-        text: `You are receiving this because you requested a password reset. Please click on the following link to reset your password: ${resetUrl}`
-      };
-
-      await transporter.sendMail(mailOptions);
-
-      return res.status(200).json({ message: "Password reset email sent" });
     } catch (err) {
       console.error("Forget password error:", err);
       return res.status(500).json({ message: "Server error", error: err.message });
@@ -205,29 +189,28 @@ const authController = {
   // POST /api/v1/resetPassword
   resetPassword: async (req, res) => {
     try {
-      const { token, password } = req.body;
+      const { email, otp, newPassword } = req.body;
       
       // Validate input
-      if (!token || !password) {
-        return res.status(400).json({ message: 'Token and password are required' });
+      if (!email || !otp || !newPassword) {
+        return res.status(400).json({ message: 'Email, OTP and new password are required' });
       }
       
-      // Find user with token
+      // Find user with valid OTP
       const user = await User.findOne({
-        resetPasswordToken: token,
-        resetPasswordExpires: { $gt: Date.now() }
-      });
+        email
+      }).select('+resetPasswordOTP +resetPasswordOTPExpires');
 
-      if (!user) {
-        return res.status(400).json({ message: "Invalid or expired token" });
+      if (!user || user.resetPasswordOTP !== otp || user.resetPasswordOTPExpires < Date.now()) {
+        return res.status(400).json({ message: "Invalid or expired OTP" });
       }
       
       // Update password
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
       user.password = hashedPassword;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
+      user.resetPasswordOTP = undefined;
+      user.resetPasswordOTPExpires = undefined;
 
       await user.save();
 
