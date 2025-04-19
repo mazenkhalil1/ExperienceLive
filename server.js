@@ -1,75 +1,48 @@
+const express = require("express"); // Import Express framework
+const mongoose = require("mongoose"); // Import Mongoose for MongoDB interaction
+const dotenv = require("dotenv"); // Import dotenv to manage environment variables
+const cookieParser = require("cookie-parser"); // Middleware to parse cookies
+const cors = require("cors"); // Enable CORS for cross-origin requests
+const errorHandler = require("./middleware/errorHandler");
 
+const authRoutes = require("./Routes/authRoutes"); // Routes for authentication
+const userRoutes = require("./Routes/usersRoutes"); // Routes for user operations
+const eventRoutes = require("./Routes/eventRoutes"); // Routes for event operations
+const bookingRoutes = require("./Routes/bookingRoutes"); // Routes for booking operations
 
+dotenv.config();
+const app = express();
 
+// Middleware Setup
+app.use(cors({
+  origin: process.env.ORIGIN,
+  credentials: true
+}));
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection failed:', err));
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection failed:", err));
 
-app.get('/', (req, res) => {
-  res.send('API is working!');
+// Use API Routes
+app.use("/api/v1", authRoutes);
+app.use("/api/v1", userRoutes);
+app.use("/api/v1/events", eventRoutes);
+app.use("/api/v1/bookings", bookingRoutes);
+
+// Error handling middleware
+app.use(errorHandler);
+
+// Handle 404 routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found"
+  });
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-
-const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require('dotenv');
-const cookieParser=require('cookie-parser')
-const cors = require("cors");
-
-dotenv.config();
-
-const app = express();
-
-const courseRouter = require("./Routes/course");
-const userRouter = require("./Routes/user");
-const authRouter = require("./Routes/auth");
-const authenticationMiddleware=require('./middleware/authenticationmiddleware')
-
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-app.use(cookieParser())
-
-app.use(
-  cors({
-    origin: process.env.ORIGIN,
-    methods: ["GET", "POST", "DELETE", "PUT"],
-    credentials: true,
-  })
-);
-
-
-
-
-app.use("/api/v1", authRouter);
-
-app.use(authenticationMiddleware);
-
-
-app.use("/api/v1/courses", courseRouter);
-app.use("/api/v1/users", userRouter);
-
-//const db_name = process.env.DB_NAME;
-// * Cloud Connection
-// const db_url = `mongodb+srv://TestUser:TestPassword@cluster0.lfqod.mongodb.net/${db_name}?retryWrites=true&w=majority`;
-
-
-/*mongoose
-  .connect(db_url)
-  .then(() => console.log("mongoDB connected"))
-  .catch((e) => {
-    console.log(e);
-  });
-
-app.use(function (req, res, next) {
-  return res.status(404).send("404");
-});
-app.listen(process.env.PORT, () => console.log("server started")); */
