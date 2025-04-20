@@ -40,7 +40,7 @@ exports.getUser = async (req, res, next) => {
 // Get current user's profile
 exports.getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.userId).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -69,10 +69,17 @@ exports.updateProfile = async (req, res, next) => {
       profilePicture: req.body.profilePicture
     };
 
-    const user = await User.findByIdAndUpdate(req.user.id, updates, {
+    const user = await User.findByIdAndUpdate(req.user.userId, updates, {
       new: true,
       runValidators: true
     }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
 
     res.json({
       success: true,
@@ -120,7 +127,7 @@ exports.updateUserRole = async (req, res, next) => {
 // Delete user (Admin only)
 exports.deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.id);
 
     if (!user) {
       return res.status(404).json({
@@ -128,11 +135,9 @@ exports.deleteUser = async (req, res, next) => {
         message: "User not found"
       });
     }
-
-    await user.remove();
     res.json({
       success: true,
-      data: {}
+      data: user
     });
   } catch (err) {
     next(err);
@@ -141,8 +146,13 @@ exports.deleteUser = async (req, res, next) => {
 
 // Standard user: View all own bookings
 exports.getUserBookings = async (req, res) => {
-  const bookings = await Booking.find({ user: req.user.userId }).populate("event");
-  res.json(bookings);
+  try {
+    const bookings = await Booking.find({ user: req.user.userId });
+    res.json(bookings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // Organizer: View own posted events
