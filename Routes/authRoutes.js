@@ -11,17 +11,10 @@ router.get('/test-db', async (req, res) => {
     console.log('Testing database connection...');
     console.log('Connection state:', mongoose.connection.readyState);
     
-    // Try to access the users collection
-    const db = mongoose.connection.db;
-    const collections = await db.listCollections().toArray();
-    const users = await db.collection('users').find({}).toArray();
-    
     return res.json({
       success: true,
       connectionState: mongoose.connection.readyState,
-      collections: collections.map(c => c.name),
-      userCount: users.length,
-      users: users.map(u => ({ email: u.email, role: u.role }))
+      connectionString: process.env.MONGO_URI ? 'Set' : 'Not set'
     });
   } catch (error) {
     console.error('Database test failed:', error);
@@ -73,19 +66,9 @@ router.post('/test-register', async (req, res) => {
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.put('/forgetPassword', authController.forgetPassword);
-router.get('/check-token', authMiddleware, authController.checkToken);
+router.put('/resetPassword', authController.resetPassword);
 
-// Test route to verify token and user data
-router.get('/verify-token', authMiddleware, (req, res) => {
-  console.log('Token verification test:');
-  console.log('Headers:', req.headers);
-  console.log('User data:', req.user);
-  
-  res.json({
-    message: 'Token verification',
-    headers: req.headers,
-    userData: req.user
-  });
-});
+// Protected routes
+router.get('/verify-token', authMiddleware, authController.checkToken);
 
 module.exports = router;
