@@ -128,13 +128,8 @@ const authController = {
       
       try {
         console.log('Checking for existing user...');
-        // Check if user already exists with timeout
-        const existingUser = await Promise.race([
-          User.findOne({ email }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Database query timeout')), 5000)
-          )
-        ]);
+        // Check if user already exists with increased timeout
+        const existingUser = await User.findOne({ email }).maxTimeMS(15000); // Increased timeout to 15 seconds
 
         if (existingUser) {
           console.log('User already exists:', email);
@@ -161,12 +156,8 @@ const authController = {
         });
         
         console.log('Attempting to save user...');
-        await Promise.race([
-          newUser.save(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Save operation timeout')), 5000)
-          )
-        ]);
+        // Save with increased timeout
+        await newUser.save({ maxTimeMS: 15000 }); // Increased timeout to 15 seconds
         
         console.log('User saved successfully');
         
@@ -200,6 +191,14 @@ const authController = {
         });
       } catch (dbError) {
         console.error('Database operation error:', dbError);
+        // More specific error handling
+        if (dbError.name === 'MongoTimeoutError' || dbError.message.includes('timeout')) {
+          return res.status(503).json({ 
+            success: false,
+            message: "Database is currently unavailable. Please try again later.",
+            error: "Database timeout"
+          });
+        }
         return res.status(500).json({ 
           success: false,
           message: "Database operation failed",

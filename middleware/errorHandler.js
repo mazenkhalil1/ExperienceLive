@@ -1,5 +1,12 @@
 const errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
+  // Log the full error
+  console.error('=== Error Handler Start ===');
+  console.error('Error:', err);
+  console.error('Stack:', err.stack);
+  console.error('Request path:', req.path);
+  console.error('Request method:', req.method);
+  console.error('Request headers:', req.headers);
+  console.error('=== Error Handler End ===');
 
   // Handle specific error types
   if (err.name === 'ValidationError') {
@@ -13,7 +20,8 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === 'CastError') {
     return res.status(400).json({
       success: false,
-      message: 'Invalid ID format'
+      message: 'Invalid ID format',
+      error: err.message
     });
   }
 
@@ -35,7 +43,9 @@ const errorHandler = (err, req, res, next) => {
   // Default error
   res.status(500).json({
     success: false,
-    message: 'Something went wrong!'
+    message: 'Something went wrong!',
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 };
 
