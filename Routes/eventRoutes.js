@@ -5,11 +5,13 @@ const authMiddleware = require("../middleware/authenticationmiddleware");
 const authorize = require("../middleware/authorizationmiddleware");
 
 // Public routes (only approved events)
-router.get("/", eventController.getEvents); // Will show only approved events
-router.get("/:id", eventController.getEvent); // Will show only if approved
+router.get("/", eventController.getEvents);
 
-// Admin routes
-router.get("/all", authMiddleware, authorize(["admin"]), eventController.getAllEvents); // All events including pending/declined
+// Admin routes - must be before /:id to prevent conflict
+router.get("/admin/all", authMiddleware, authorize(["admin"]), eventController.getAllEvents);
+
+// Event detail route
+router.get("/:id", eventController.getEvent);
 
 // Event Organizer routes
 router.post("/", authMiddleware, authorize(["organizer"]), eventController.createEvent);
