@@ -38,13 +38,51 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
+// Connect to MongoDB with debug mode
+mongoose.set('debug', { 
+  color: true,
+  shell: true 
+});
+
+// Add connection error handler
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('connected', () => {
+  console.log('MongoDB connected successfully');
+});
+
+// Connect with more detailed options
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+  heartbeatFrequencyMS: 2000,
+  retryWrites: true,
+  w: 'majority',
+  family: 4
+})
+  .then(async () => {
     console.log("\n=== MongoDB Connection Success ===");
     console.log("MongoDB connected successfully");
     console.log("Connection state:", mongoose.connection.readyState);
     console.log("Database name:", mongoose.connection.name);
+    console.log("Database host:", mongoose.connection.host);
+    
+    // Log database info
+    const db = mongoose.connection.db;
+    try {
+      const collections = await db.listCollections().toArray();
+      console.log('\nAvailable collections:', collections.map(c => c.name));
+      console.log("=================================\n");
+    } catch (err) {
+      console.error('Error checking database:', err);
+    }
   })
   .catch((err) => {
     console.error("\n=== MongoDB Connection Error ===");
@@ -54,6 +92,7 @@ mongoose.connect(process.env.MONGO_URI)
       console.error("Error reason:", err.reason);
     }
     console.error("===============================\n");
+    process.exit(1); // Exit if we can't connect to database
   });
 
 // Mount routes with debugging
