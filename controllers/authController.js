@@ -4,6 +4,27 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 const authController = {
+  // Test endpoint to check token
+  checkToken: async (req, res) => {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ message: "No token provided" });
+      }
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      return res.json({
+        decoded,
+        user: req.user
+      });
+    } catch (error) {
+      return res.status(403).json({ 
+        message: "Invalid token",
+        error: error.message 
+      });
+    }
+  },
+
   // POST /api/v1/login
   login: async (req, res) => {
     try {
@@ -19,7 +40,9 @@ const authController = {
       
       // Find user by email
       console.log('Looking for user with email:', email);
-      const user = await User.findOne({ email }).select('+password');
+      const user = await User.findOne({ email });
+      console.log("User password from database:", user?.password);
+
       console.log('User found:', user ? 'Yes' : 'No');
       
       if (!user) {
@@ -31,13 +54,14 @@ const authController = {
         id: user._id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        password: user.password ? '******' : 'No password found'
       });
       
       try {
         // Compare passwords
         console.log('Attempting to compare passwords...');
-        const isMatch = await user.comparePassword(password);
+        const isMatch = await bcrypt.compare(password, user.password);
         console.log('Password comparison result:', isMatch);
 
         if (!isMatch) {
@@ -88,65 +112,108 @@ const authController = {
   // POST /api/v1/register
   register: async (req, res) => {
     try {
-      console.log('Register attempt with body:', req.body);
+      console.log('=== Register Attempt Start ===');
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
       
       const { email, password, name, role } = req.body;
       
       // Validate input
       if (!email || !password || !name) {
-        return res.status(400).json({ message: 'Name, email and password are required' });
+        console.log('Validation failed: Missing required fields');
+        return res.status(400).json({ 
+          success: false,
+          message: 'Name, email and password are required' 
+        });
       }
       
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        console.log('User already exists:', email);
-        return res.status(409).json({ message: "User already exists" });
-      }
-      
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-      
-      // Create new user
-      const newUser = new User({ 
-        email, 
-        password: hashedPassword,
-        name, 
-        role: role || 'user'
-      });
-      
-      await newUser.save();
-      console.log('User registered successfully:', email);
-      
-      // Create token
-      const token = jwt.sign(
-        { userId: newUser._id, role: newUser.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-      
-      // Set cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
-      
-      return res.status(201).json({ 
-        success: true,
-        message: "User registered successfully",
-        token,
-        user: {
-          id: newUser._id,
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role
+      try {
+        console.log('Checking for existing user...');
+        // Check if user already exists with timeout
+        const existingUser = await Promise.race([
+          User.findOne({ email }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Database query timeout')), 5000)
+          )
+        ]);
+
+        if (existingUser) {
+          console.log('User already exists:', email);
+          return res.status(409).json({ 
+            success: false,
+            message: "User already exists" 
+          });
         }
-      });
+        
+        console.log('No existing user found, proceeding with registration');
+        
+        // Hash password
+        console.log('Hashing password...');
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('Password hashed successfully');
+        
+        // Create new user
+        console.log('Creating new user...');
+        const newUser = new User({ 
+          email, 
+          password: hashedPassword,
+          name, 
+          role: role || 'user'
+        });
+        
+        console.log('Attempting to save user...');
+        await Promise.race([
+          newUser.save(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Save operation timeout')), 5000)
+          )
+        ]);
+        
+        console.log('User saved successfully');
+        
+        // Create token
+        console.log('Creating JWT token...');
+        const token = jwt.sign(
+          { userId: newUser._id, role: newUser.role },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+        console.log('JWT token created');
+        
+        // Set cookie
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+        
+        console.log('=== Register Attempt Success ===');
+        return res.status(201).json({ 
+          success: true,
+          message: "User registered successfully",
+          token,
+          user: {
+            id: newUser._id,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role
+          }
+        });
+      } catch (dbError) {
+        console.error('Database operation error:', dbError);
+        return res.status(500).json({ 
+          success: false,
+          message: "Database operation failed",
+          error: dbError.message 
+        });
+      }
     } catch (error) {
-      console.error("Registration error:", error);
-      return res.status(500).json({ message: "Server error", error: error.message });
+      console.error('=== Register Attempt Failed ===');
+      console.error('Error:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: "Server error", 
+        error: error.message 
+      });
     }
   },
 
