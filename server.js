@@ -38,40 +38,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Connect to MongoDB with debug mode
-mongoose.set('debug', { 
-  color: true,
-  shell: true 
-});
-
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 60000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 60000,
-  heartbeatFrequencyMS: 2000,
-  retryWrites: true,
-  w: 'majority',
-  family: 4
-})
-  .then(async () => {
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
     console.log("\n=== MongoDB Connection Success ===");
     console.log("MongoDB connected successfully");
     console.log("Connection state:", mongoose.connection.readyState);
     console.log("Database name:", mongoose.connection.name);
-    
-    // Log database info
-    const db = mongoose.connection.db;
-    try {
-      const collections = await db.listCollections().toArray();
-      console.log('\nAvailable collections:', collections.map(c => c.name));
-      
-      // Check users collection
-      const users = await db.collection('users').find({}).toArray();
-      console.log('Existing users:', users.map(u => ({ email: u.email, role: u.role })));
-      console.log("=================================\n");
-    } catch (err) {
-      console.error('Error checking database:', err);
-    }
   })
   .catch((err) => {
     console.error("\n=== MongoDB Connection Error ===");
