@@ -98,6 +98,7 @@ app.use("/api/v1/users", (req, res, next) => {
   next();
 }, userRoutes);
 
+
 // Event routes
 app.use("/api/v1/events", (req, res, next) => {
   console.log('Event route hit:', req.path);
