@@ -197,12 +197,16 @@ exports.deleteEvent = async (req, res, next) => {
       });
     }
 
-    await event.remove();
+    // Use findByIdAndDelete instead of remove()
+    await Event.findByIdAndDelete(req.params.id);
+
     res.json({
       success: true,
+      message: "Event deleted successfully",
       data: {}
     });
   } catch (err) {
+    console.error('Delete event error:', err);
     next(err);
   }
 };
