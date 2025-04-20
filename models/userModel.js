@@ -24,6 +24,16 @@ const userSchema = new mongoose.Schema(
       default: 'user',
       required: true
     },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+    resetPasswordOTP: {
+      type: String,
+      select: false
+    },
+    resetPasswordOTPExpires: {
+      type: Date,
+      select: false
+    },
     bookings: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Booking'
@@ -38,4 +48,4 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('User', userSchema); 
+module.exports = mongoose.model('User', userSchema);

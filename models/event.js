@@ -7,9 +7,22 @@ const eventSchema = new mongoose.Schema({
   location: { type: String, required: true },
   price: { type: Number, required: true },
   totalTickets: { type: Number, required: true },
-  remainingTickets: { type: Number, required: true },
-  status: { type: String, enum: ["approved", "pending", "declined"], default: "pending" },
-  organizer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  remainingTickets: { 
+    type: Number,
+    default: function() {
+      return this.totalTickets;
+    }
+  },
+  status: { 
+    type: String, 
+    enum: ["approved", "pending", "declined"], 
+    default: "pending" 
+  },
+  organizer: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true 
+  },
   category: { type: String },
   image: { type: String },
   analytics: {
@@ -17,6 +30,8 @@ const eventSchema = new mongoose.Schema({
     totalRevenue: { type: Number, default: 0 },
     bookingPercentage: { type: Number, default: 0 }
   }
+}, {
+  timestamps: true
 });
 
 // Method to update analytics
