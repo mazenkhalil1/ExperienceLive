@@ -36,7 +36,7 @@ exports.createBooking = async (req, res, next) => {
 
     // Create booking
     const booking = new Booking({
-      user: req.user.id,
+      user: req.user.userId,
       event: eventId,
       quantity,
       totalPrice
@@ -60,7 +60,7 @@ exports.createBooking = async (req, res, next) => {
 // Get user's bookings
 exports.getUserBookings = async (req, res, next) => {
   try {
-    const bookings = await Booking.find({ user: req.user.id })
+    const bookings = await Booking.find({ user: req.user.userId })
       .populate("event", "title date location price")
       .sort("-bookedAt");
 
@@ -88,7 +88,7 @@ exports.getBooking = async (req, res, next) => {
     }
 
     // Check if user owns the booking
-    if (booking.user.toString() !== req.user.id) {
+    if (booking.user.toString() !== req.user.userId) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to view this booking"
@@ -117,7 +117,7 @@ exports.cancelBooking = async (req, res, next) => {
     }
 
     // Check if user owns the booking
-    if (booking.user.toString() !== req.user.id) {
+    if (booking.user.toString() !== req.user.userId) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to cancel this booking"
