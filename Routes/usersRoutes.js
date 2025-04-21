@@ -8,7 +8,7 @@ const authorize = require("../middleware/authorizationmiddleware");
 //router.get("/", authMiddleware, authorize(["admin"]), userController.getUsers);
 router.get("/profile", authMiddleware, userController.getProfile);
 router.put("/profile", authMiddleware, userController.updateProfile);
-router.get("/bookings", authMiddleware, userController.getUserBookings);
+router.get("/bookings", authMiddleware, authorize(["user"]), userController.getUserBookings);
 
 // Organizer event routes
 router.get("/events", authMiddleware, authorize(["organizer"]), userController.getOrganizerEvents);
