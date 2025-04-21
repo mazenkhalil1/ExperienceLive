@@ -64,8 +64,7 @@ exports.updateProfile = async (req, res, next) => {
     const updates = {
       name: req.body.name,
       email: req.body.email,
-      phone: req.body.phone,
-      address: req.body.address,
+      password: req.body.password,
       profilePicture: req.body.profilePicture
     };
 
