@@ -8,7 +8,7 @@ const authorize = require("../middleware/authorizationmiddleware");
 router.get("/", eventController.getEvents);
 
 // Admin routes - must be before /:id to prevent conflict
-router.get("/admin/all", authMiddleware, authorize(["admin"]), eventController.getAllEvents);
+router.get("/all", authMiddleware, authorize(["admin"]), eventController.getAllEvents);
 
 // Event detail route
 router.get("/:id", eventController.getEvent);

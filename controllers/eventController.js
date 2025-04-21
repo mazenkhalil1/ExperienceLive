@@ -28,7 +28,6 @@ exports.createEvent = async (req, res, next) => {
       price: req.body.price,
       totalTickets: req.body.totalTickets,
       category: req.body.category,
-      image: req.body.image,
       organizer: req.user.userId // This will be converted to ObjectId by Mongoose
     };
 
@@ -115,7 +114,7 @@ exports.getEvent = async (req, res, next) => {
       });
     }
 
-    // For public access, only show approved events
+    /* For public access, only show approved events
     if (!req.user || req.user.role !== 'admin') {
       if (event.status !== 'approved') {
         return res.status(404).json({
@@ -123,7 +122,7 @@ exports.getEvent = async (req, res, next) => {
           message: "Event not found"
         });
       }
-    }
+    }*/
 
     res.json({
       success: true,
@@ -146,22 +145,40 @@ exports.updateEvent = async (req, res, next) => {
       });
     }
 
-    // Check if user is organizer or admin
-    if (event.organizer.toString() !== req.user.userId && req.user.role !== "admin") {
+    // Organizers can only update their own events
+    const isOrganizer = event.organizer.toString() === req.user.userId;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOrganizer && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to update this event"
       });
     }
 
-    // Only allow updating specific fields
-    const allowedUpdates = ["title", "description", "date", "location", "price", "totalTickets", "category", "image"];
-    const updates = Object.keys(req.body)
-      .filter(key => allowedUpdates.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = req.body[key];
-        return obj;
-      }, {});
+    // Define allowed fields per role
+    const organizerFields = ["ticketsAvailable", "date", "location"];
+    const adminFields = ["status"];
+    const requestedFields = Object.keys(req.body);
+
+    // Check if all fields are allowed for this role
+    const isAllowed =
+      isAdmin
+        ? requestedFields.every(field => adminFields.includes(field))
+        : requestedFields.every(field => organizerFields.includes(field));
+
+    if (!isAllowed) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update the requested fields"
+      });
+    }
+
+    // Perform the update
+    const updates = requestedFields.reduce((obj, key) => {
+      obj[key] = req.body[key];
+      return obj;
+    }, {});
 
     event = await Event.findByIdAndUpdate(req.params.id, updates, {
       new: true,
@@ -176,7 +193,6 @@ exports.updateEvent = async (req, res, next) => {
     next(err);
   }
 };
-
 // Delete event
 exports.deleteEvent = async (req, res, next) => {
   try {
