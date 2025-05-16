@@ -1,0 +1,12 @@
+### Register a new user
+GET http://localhost:5000/api/v1/test
+
+
+### Login
+POST http://localhost:5000/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "mazen13.com",
+  "password": "password123"
+}

@@ -1,18 +1,14 @@
-const express = require('express');
-const {
-  bookTicket,
-  getMyBookings,
-  cancelBooking,
-  getBookingById
-} = require('../controllers/bookingController');
-
-const { authenticate, authorize } = require('../middleware/auth');
+const express = require("express");
 const router = express.Router();
+const bookingController = require("../controllers/bookingController");
+const authMiddleware = require("../middleware/authenticationmiddleware");
+const authorize = require("../middleware/authorizationmiddleware");
 
-// Standard users only
-router.post('/', authenticate, authorize('user'), bookTicket);
-router.get('/', authenticate, authorize('user'), getMyBookings);
-router.get('/:id', authenticate, authorize('user'), getBookingById);
-router.delete('/:id', authenticate, authorize('user'), cancelBooking);
+
+
+// User routes
+router.post("/", authMiddleware, authorize(["user"]), bookingController.createBooking);
+router.get("/:id", authMiddleware,authorize(["user"]), bookingController.getBooking);
+router.delete("/:id", authMiddleware,authorize(["user"]), bookingController.cancelBooking);
 
 module.exports = router;
