@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema(
       maxLength: 30,
       required: true
     },
+    profilePicture: {
+      type: String, // You’ll store the image URL or path
+      default: ""   // or a default placeholder image path
+    },
     role: {
       type: String,
       enum: ['user', 'organizer', 'admin'],

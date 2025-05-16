@@ -115,7 +115,7 @@ const authController = {
       console.log('=== Register Attempt Start ===');
       console.log('Request body:', JSON.stringify(req.body, null, 2));
       
-      const { email, password, name, role } = req.body;
+      const { email, password, name, role ,profilePicture } = req.body;
       
       // Validate input
       if (!email || !password || !name) {
@@ -152,7 +152,8 @@ const authController = {
           email, 
           password: hashedPassword,
           name, 
-          role: role || 'user'
+          role: role || 'user',
+          profilePicture: profilePicture || ""
         });
         
         console.log('Attempting to save user...');
@@ -186,7 +187,8 @@ const authController = {
             id: newUser._id,
             name: newUser.name,
             email: newUser.email,
-            role: newUser.role
+            role: newUser.role,
+            profilePicture: newUser.profilePicture
           }
         });
       } catch (dbError) {
