@@ -18,11 +18,25 @@ const userSchema = new mongoose.Schema(
       maxLength: 30,
       required: true
     },
+    profilePicture: {
+      type: String, // You’ll store the image URL or path
+      default: ""   // or a default placeholder image path
+    },
     role: {
       type: String,
       enum: ['user', 'organizer', 'admin'],
       default: 'user',
       required: true
+    },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+    resetPasswordOTP: {
+      type: String,
+      select: false
+    },
+    resetPasswordOTPExpires: {
+      type: Date,
+      select: false
     },
     bookings: [{
       type: mongoose.Schema.Types.ObjectId,
@@ -38,4 +52,4 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('User', userSchema); 
+module.exports = mongoose.model('User', userSchema);
