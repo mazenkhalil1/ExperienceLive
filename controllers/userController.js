@@ -40,7 +40,7 @@ exports.getUser = async (req, res, next) => {
 // Get current user's profile
 exports.getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.userId).select("-password");
+    const user = await User.findById(req.user.userId).select("+password");
 
     if (!user) {
       return res.status(404).json({
@@ -59,20 +59,24 @@ exports.getProfile = async (req, res, next) => {
 };
 
 // Update current user's profile
+const bcrypt = require("bcrypt");
 exports.updateProfile = async (req, res, next) => {
   try {
     const updates = {
       name: req.body.name,
       email: req.body.email,
-      phone: req.body.phone,
-      address: req.body.address,
       profilePicture: req.body.profilePicture
     };
+
+    if(req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.password = await bcrypt.hash(req.body.password, salt);
+    }
 
     const user = await User.findByIdAndUpdate(req.user.userId, updates, {
       new: true,
       runValidators: true
-    }).select("-password");
+    }).select("+password");
 
     if (!user) {
       return res.status(404).json({
@@ -157,8 +161,38 @@ exports.getUserBookings = async (req, res) => {
 
 // Organizer: View own posted events
 exports.getOrganizerEvents = async (req, res) => {
-  const events = await Event.find({ organizer: req.user.userId });
-  res.json(events);
+  try {
+    const events = await Event.find({ organizer: req.user.userId });
+
+    const enhancedEvents = await Promise.all(events.map(async (event) => {
+      // Get total bookings for this event
+      const bookings = await Booking.find({ event: event._id });
+
+      const totalBookings = bookings.reduce((acc, b) => acc + b.quantity, 0);
+      const totalRevenue = bookings.reduce((acc, b) => acc + b.totalPrice, 0);
+
+      const bookingPercentage = event.totalTickets > 0
+        ? (((event.totalTickets - event.remainingTickets) / event.totalTickets) * 100).toFixed(2)
+        : "0";
+
+      return {
+        ...event.toObject(),
+        analytics: {
+          totalBookings,
+          totalRevenue,
+          bookingPercentage: bookingPercentage + "%"
+        }
+      };
+    }));
+
+    res.json(enhancedEvents);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch organizer events with analytics",
+      error: err.message
+    });
+  }
 };
 
 // Organizer: View analytics on booked tickets

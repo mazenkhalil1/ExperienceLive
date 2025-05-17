@@ -5,20 +5,24 @@ const authMiddleware = require("../middleware/authenticationmiddleware");
 const authorize = require("../middleware/authorizationmiddleware");
 
 // Admin routes
-router.get("/", authMiddleware, authorize(["admin"]), userController.getUsers);
-router.get("/:id", authMiddleware, authorize(["admin"]), userController.getUser);
-router.put("/:id", authMiddleware, authorize(["admin"]), userController.updateUserRole);
-router.delete("/:id", authMiddleware, authorize(["admin"]), userController.deleteUser);
-
-// User profile routes
+//router.get("/", authMiddleware, authorize(["admin"]), userController.getUsers);
 router.get("/profile", authMiddleware, userController.getProfile);
 router.put("/profile", authMiddleware, userController.updateProfile);
-
-// User bookings
-router.get("/bookings", authMiddleware, userController.getUserBookings);
+router.get("/bookings", authMiddleware, authorize(["user"]), userController.getUserBookings);
 
 // Organizer event routes
 router.get("/events", authMiddleware, authorize(["organizer"]), userController.getOrganizerEvents);
 router.get("/events/analytics", authMiddleware, authorize(["organizer"]), userController.getEventAnalytics);
+
+router.get("/", authMiddleware, authorize(["admin"]), userController.getUsers);
+
+router.get("/:id", authMiddleware, authorize(["admin"]), userController.getUser);
+router.put("/:id", authMiddleware, authorize(["admin"]), userController.updateUserRole);
+router.delete("/:id", authMiddleware, authorize(["admin"]), userController.deleteUser);
+//router.get("/bookings", authMiddleware, userController.getUserBookings);
+
+// Organizer event routes
+//router.get("/events", authMiddleware, authorize(["organizer"]), userController.getOrganizerEvents);
+//router.get("/events/analytics", authMiddleware, authorize(["organizer"]), userController.getEventAnalytics);
 
 module.exports = router;
