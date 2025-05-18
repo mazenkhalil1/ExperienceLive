@@ -26,12 +26,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware Setup
+/*// Middleware Setup
 app.use(cors({
   origin: '*', // Allow all origins for testing
   credentials: true,
   exposedHeaders: ['Authorization']
-}));
+})); */
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  credentials: true,
+  exposedHeaders: ['Authorization'],
+};
+
+app.use(cors(corsOptions));
 
 // Parse JSON bodies
 app.use(express.json());
