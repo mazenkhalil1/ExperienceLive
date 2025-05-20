@@ -8,26 +8,34 @@ function ForgetPasswordForm() {
   const [newPassword, setNewPassword] = useState('');
   const [step, setStep] = useState(1); // 1: Email entry, 2: OTP verification
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleRequestOTP = async (e) => {
     e.preventDefault();
     setMessage('');
+    setError('');
 
     try {
       const res = await axios.put('http://localhost:5000/api/v1/forgetPassword', { email });
-      setMessage('OTP sent to your email. Please check and enter below.');
+      setMessage('OTP sent successfully. Please check your email and enter the OTP below.');
       setStep(2);
       console.log('OTP request success:', res.data);
     } catch (err) {
       console.error('OTP request error:', err.response?.data || err.message);
-      setMessage(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+      setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
     }
   };
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setMessage('');
+    setError('');
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
 
     try {
       const res = await axios.put('http://localhost:5000/api/v1/resetPassword', {
@@ -36,29 +44,41 @@ function ForgetPasswordForm() {
         newPassword
       });
       
-      setMessage('Password reset successful!');
+      setMessage('Password reset successful! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err) {
       console.error('Password reset error:', err.response?.data || err.message);
-      setMessage(err.response?.data?.message || 'Failed to reset password. Please try again.');
+      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto' }}>
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
       <h2>Reset Password</h2>
       
       {message && (
         <div style={{ 
           padding: '10px', 
           marginBottom: '15px', 
-          backgroundColor: message.includes('successful') ? '#d4edda' : '#f8d7da',
-          color: message.includes('successful') ? '#155724' : '#721c24',
+          backgroundColor: '#d4edda',
+          color: '#155724',
           borderRadius: '4px'
         }}>
           {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ 
+          padding: '10px', 
+          marginBottom: '15px', 
+          backgroundColor: '#f8d7da',
+          color: '#721c24',
+          borderRadius: '4px'
+        }}>
+          {error}
         </div>
       )}
 
@@ -101,6 +121,7 @@ function ForgetPasswordForm() {
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               required
+              placeholder="Enter the 6-digit OTP"
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             />
           </div>
@@ -113,6 +134,8 @@ function ForgetPasswordForm() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
+              minLength={6}
+              placeholder="Enter new password (min. 6 characters)"
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             />
           </div>
