@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../services/api';
 import EventCard from './EventCard';
-import Loader from '../Loader';
+import Loader from '../shared/Loader';
+import { showToast } from '../shared/Toast';
 
 export default function EventList() {
   const [events, setEvents] = useState([]);
@@ -24,7 +25,7 @@ export default function EventList() {
       const response = await api.get('/events', { params: filters });
       setEvents(response.data.data);
     } catch (error) {
-      toast.error('Failed to fetch events');
+      showToast.error('Failed to fetch events');
       console.error('Error fetching events:', error);
     } finally {
       setLoading(false);

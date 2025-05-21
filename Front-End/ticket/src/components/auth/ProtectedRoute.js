@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useUser } from '../../context/UserContext';
+import { useAuth } from '../../context/AuthContext';
 import Loader from '../shared/Loader';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, loading, isAuthenticated } = useUser();
+  const { user, loading, isAuthenticated } = useAuth();
   const location = useLocation();
 
   // Show loading state while checking authentication
