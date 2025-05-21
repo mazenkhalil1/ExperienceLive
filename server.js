@@ -26,16 +26,13 @@ app.use((req, res, next) => {
   next();
 });
 
-/*// Middleware Setup
-app.use(cors({
-  origin: '*', // Allow all origins for testing
-  credentials: true,
-  exposedHeaders: ['Authorization']
-})); */
 const corsOptions = {
   origin: 'http://localhost:3000',
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Authorization'],
+  maxAge: 86400 // 24 hours
 };
 
 app.use(cors(corsOptions));
@@ -152,8 +149,7 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`\n=== Server Started ===`);
   console.log(`Server running on port ${PORT}`);
   console.log(`http://localhost:${PORT}`);
-  console.log(`===================\n`);
+  console.log('===================');
 });
