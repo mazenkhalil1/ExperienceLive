@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 function LoginForm() {
@@ -50,6 +50,7 @@ function LoginForm() {
             setEmail(e.target.value);
           }}
           required
+          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '8px' }}
         />
         <input
           type="password"
@@ -60,9 +61,21 @@ function LoginForm() {
             setPassword(e.target.value);
           }}
           required
+          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '8px' }}
         />
-        <button type="submit">Login</button>
+        <button 
+          type="submit"
+          style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none' }}
+        >
+          Login
+        </button>
       </form>
+      
+      <div style={{ marginTop: '15px', textAlign: 'center' }}>
+        <Link to="/forget-password" style={{ color: '#007bff', textDecoration: 'none' }}>
+          Forgot Password?
+        </Link>
+      </div>
     </div>
   );
 }
