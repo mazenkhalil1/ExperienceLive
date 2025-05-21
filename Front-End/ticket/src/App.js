@@ -1,158 +1,105 @@
+import './App.css';
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-
-// Auth Components
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { UserProvider } from './context/UserContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
-import ForgotPassword from './components/auth/ForgotPassword';
-
-// Profile Components
+import ForgetPasswordForm from './components/auth/ForgetPasswordForm';
 import ProfilePage from './components/profile/ProfilePage';
+import Navbar from './components/navigation/Navbar';
+import Footer from './components/shared/Footer';
+import Toast from './components/shared/Toast';
+import Loader from './components/shared/Loader';
 
-// Event Components
-import EventList from './components/events/EventList';
-import EventDetails from './components/events/EventDetails';
-
-// Booking Components
-import BookingList from './components/bookings/BookingList';
-import BookingDetails from './components/bookings/BookingDetails';
-
-// Organizer Components
-import MyEvents from './components/organizer/MyEvents';
-import CreateEvent from './components/organizer/CreateEvent';
-import EditEvent from './components/organizer/EditEvent';
-import EventAnalytics from './components/organizer/EventAnalytics';
-
-// Admin Components
-import AdminEvents from './components/admin/AdminEvents';
-import AdminUsers from './components/admin/AdminUsers';
-
-// Error Pages
-import Unauthorized from './components/errors/Unauthorized';
-import NotFound from './components/errors/NotFound';
+// Placeholder components for different user roles
+const AdminDashboard = () => <div>Admin Dashboard</div>;
+const OrganizerDashboard = () => <div>Organizer Dashboard</div>;
+const UserDashboard = () => <div>User Dashboard</div>;
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col">
+    <UserProvider>
+      <Router>
+        <div style={{ 
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
           <Navbar />
-          <main className="flex-grow">
+          <main style={{ flex: 1, padding: '20px 0' }}>
             <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<EventList />} />
+              {/* Public routes */}
               <Route path="/login" element={<LoginForm />} />
               <Route path="/register" element={<RegisterForm />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/events/:id" element={<EventDetails />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/forget-password" element={<ForgetPasswordForm />} />
 
-              {/* Protected Routes - All Authenticated Users */}
-              <Route
-                path="/profile"
+              {/* Protected routes */}
+              <Route 
+                path="/profile" 
                 element={
                   <ProtectedRoute>
                     <ProfilePage />
                   </ProtectedRoute>
-                }
+                } 
               />
 
-              {/* Protected Routes - Standard Users */}
-              <Route
-                path="/bookings"
-                element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <BookingList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/bookings/:id"
-                element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <BookingDetails />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Protected Routes - Organizers */}
-              <Route
-                path="/my-events"
-                element={
-                  <ProtectedRoute allowedRoles={['organizer']}>
-                    <MyEvents />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-events/new"
-                element={
-                  <ProtectedRoute allowedRoles={['organizer']}>
-                    <CreateEvent />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-events/:id/edit"
-                element={
-                  <ProtectedRoute allowedRoles={['organizer']}>
-                    <EditEvent />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-events/analytics"
-                element={
-                  <ProtectedRoute allowedRoles={['organizer']}>
-                    <EventAnalytics />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Protected Routes - Admin */}
-              <Route
-                path="/admin/events"
+              {/* Role-specific routes */}
+              <Route 
+                path="/admin/*" 
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminEvents />
+                    <AdminDashboard />
                   </ProtectedRoute>
-                }
+                } 
               />
-              <Route
-                path="/admin/users"
+              <Route 
+                path="/organizer/*" 
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminUsers />
+                  <ProtectedRoute allowedRoles={['organizer']}>
+                    <OrganizerDashboard />
                   </ProtectedRoute>
-                }
+                } 
+              />
+              <Route 
+                path="/user/*" 
+                element={
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <UserDashboard />
+                  </ProtectedRoute>
+                } 
               />
 
-              {/* 404 Route */}
-              <Route path="*" element={<NotFound />} />
+              {/* Default route - redirect based on role */}
+              <Route 
+                path="/" 
+                element={
+                  <ProtectedRoute>
+                    {({ user }) => {
+                      switch (user?.role) {
+                        case 'admin':
+                          return <Navigate to="/admin/dashboard" replace />;
+                        case 'organizer':
+                          return <Navigate to="/organizer/dashboard" replace />;
+                        case 'user':
+                          return <Navigate to="/user/dashboard" replace />;
+                        default:
+                          return <Navigate to="/login" replace />;
+                      }
+                    }}
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </main>
           <Footer />
+          <Toast />
         </div>
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-      </AuthProvider>
-    </Router>
+      </Router>
+    </UserProvider>
   );
 }
 
