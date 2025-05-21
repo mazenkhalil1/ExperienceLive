@@ -1,6 +1,38 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+// Configure axios defaults
+axios.defaults.withCredentials = true;
+
+// Add request interceptor to include token in headers
+axios.interceptors.request.use(
+  (config) => {
+    // Debug: Log all cookies
+    console.log('🍪 All cookies:', document.cookie);
+    
+    // Get token from cookies
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('token='))
+      ?.split('=')[1];
+
+    console.log('🔑 Extracted token:', token ? 'exists' : 'not found');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('📤 Setting Authorization header:', config.headers.Authorization);
+    } else {
+      console.log('⚠️ No token found in cookies');
+    }
+    
+    return config;
+  },
+  (error) => {
+    console.error('❌ Axios interceptor error:', error);
+    return Promise.reject(error);
+  }
+);
+
 const UserContext = createContext();
 
 export function UserProvider({ children }) {
@@ -11,12 +43,21 @@ export function UserProvider({ children }) {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/v1/profile', { withCredentials: true });
-      setUser(res.data.user);
+      console.log('🔄 Fetching user profile...');
+      const res = await axios.get('http://localhost:5000/api/v1/users/profile');
+      
+      console.log('✅ Profile response:', res.data);
+      
+      // Update to match the backend response structure
+      setUser(res.data.data);
       setIsAuthenticated(true);
       setError(null);
     } catch (err) {
-      console.error('Error fetching user:', err);
+      console.error('❌ Profile fetch error:', {
+        status: err.response?.status,
+        message: err.response?.data?.message || err.message,
+        headers: err.config?.headers
+      });
       setUser(null);
       setIsAuthenticated(false);
       setError(err.response?.data?.message || 'Error fetching user data');

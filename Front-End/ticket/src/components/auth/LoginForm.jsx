@@ -1,54 +1,101 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { useUser } from '../../context/UserContext';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { refreshUser } = useUser();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log('🔍 Submitting login form...');
-    console.log('📧 Email:', email);
-    console.log('🔑 Password:', password);
+    setError('');
 
     try {
-      console.log('🚀 Sending POST request to /api/v1/login...');
+      console.log('🚀 Sending login request...');
       const res = await axios.post('http://localhost:5000/api/v1/login', {
         email,
         password
-      }, { withCredentials: true });
+      }, { 
+        withCredentials: true,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
 
-      console.log('✅ Login successful:', res.data);
-      alert('Login successful');
-      navigate('/');
-    } catch (err) {
-      console.log('❌ Login failed!');
-      if (err.response) {
-        console.log('🔁 Server responded with status:', err.response.status);
-        console.log('📦 Response data:', err.response.data);
-        alert('Login failed: ' + (err.response.data.message || 'Unknown error'));
-      } else {
-        console.log('📡 Network error or server down');
-        alert('Login failed: Network error');
+      console.log('✅ Login response:', {
+        status: res.status,
+        statusText: res.statusText,
+        headers: res.headers,
+        data: res.data,
+        cookies: document.cookie
+      });
+
+      if (!res.data.success) {
+        throw new Error(res.data.message || 'Login failed');
       }
+
+      // Store token in memory for immediate use
+      const token = res.data.token;
+      if (token) {
+        // Set default authorization header for subsequent requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Wait a moment to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Debug: Check if token cookie exists
+      const cookies = document.cookie.split(';');
+      console.log('🍪 All cookies after login:', cookies);
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
+      console.log('🔑 Token cookie after login:', tokenCookie ? tokenCookie : 'not found');
+
+      if (!tokenCookie) {
+        console.warn('⚠️ Token cookie not set, but proceeding with token from response');
+      }
+
+      // Refresh user data in context
+      await refreshUser();
+      
+      // Navigate to profile page
+      navigate('/profile');
+    } catch (err) {
+      console.error('❌ Login error:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        headers: err.response?.headers,
+        cookies: document.cookie
+      });
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
     }
   };
 
   return (
     <div style={{ maxWidth: '400px', margin: '50px auto' }}>
       <h2>Login</h2>
+      {error && (
+        <div style={{ 
+          color: 'red', 
+          marginBottom: '10px', 
+          padding: '10px', 
+          backgroundColor: '#ffebee', 
+          borderRadius: '4px' 
+        }}>
+          {error}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => {
-            console.log('📥 Email changed to:', e.target.value);
-            setEmail(e.target.value);
-          }}
+          onChange={(e) => setEmail(e.target.value)}
           required
           style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '8px' }}
         />
@@ -56,10 +103,7 @@ function LoginForm() {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => {
-            console.log('🔐 Password changed');
-            setPassword(e.target.value);
-          }}
+          onChange={(e) => setPassword(e.target.value)}
           required
           style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '8px' }}
         />

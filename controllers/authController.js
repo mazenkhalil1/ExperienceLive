@@ -82,12 +82,20 @@ const authController = {
       );
       console.log('JWT token created successfully');
       
-      // Set cookie
-      res.cookie("token", token, {
+      // Set cookie with modified settings
+      const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: false, // Set to false for localhost development
+        sameSite: 'lax',
+        path: '/',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
+      };
+      
+      console.log('Setting cookie with options:', cookieOptions);
+      res.cookie("token", token, cookieOptions);
+      
+      // Log response headers
+      console.log('Response headers after setting cookie:', res.getHeaders());
       
       console.log('Login successful for user:', email);
       
@@ -175,6 +183,9 @@ const authController = {
         res.cookie("token", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
+          sameSite: 'lax',
+          domain: 'localhost',
+          path: '/',
           maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
         
@@ -292,8 +303,14 @@ const authController = {
   // POST /api/v1/logout
   logOut: async (req, res) => {
     try {
-      // Clear the token cookie
-      res.clearCookie("token");
+      // Clear the token cookie with same options
+      const cookieOptions = {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        path: '/'
+      };
+      res.clearCookie("token", cookieOptions);
       return res.status(200).json({ 
         success: true,
         message: "Logged out successfully" 
