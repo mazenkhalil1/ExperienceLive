@@ -16,22 +16,22 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (isAuthenticated()) {
-        try {
-          const response = await axiosInstance.get('/profile');
-          setUser(response.data.data);
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-          clearAuth();
-          setUser(null);
-        }
+  const fetchUser = async () => {
+    if (isAuthenticated()) {
+      try {
+        const response = await axiosInstance.get('/profile');
+        setUser(response.data.data);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        clearAuth();
+        setUser(null);
       }
-      setIsLoading(false);
-    };
+    }
+    setIsLoading(false);
+  };
 
-    checkAuth();
+  useEffect(() => {
+    fetchUser();
   }, []);
 
   const login = (userData) => {
@@ -48,7 +48,8 @@ export const UserProvider = ({ children }) => {
     isLoading,
     isAuthenticated: !!user,
     login,
-    logout
+    logout,
+    refreshUser: fetchUser
   };
 
   return (
