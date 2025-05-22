@@ -11,9 +11,16 @@ import Navbar from './components/navigation/Navbar';
 import Footer from './components/shared/Footer';
 import Toast from './components/shared/Toast';
 import Loader from './components/shared/Loader';
+import AdminUsersPage from './components/AdminUsersPage';
 
 // Placeholder components for different user roles
-const AdminDashboard = () => <div>Admin Dashboard</div>;
+const AdminDashboard = () => (
+  <Routes>
+    <Route path="dashboard" element={<div>Admin Dashboard</div>} />
+    <Route path="users" element={<AdminUsersPage />} />
+    <Route path="*" element={<Navigate to="dashboard" replace />} />
+  </Routes>
+);
 const OrganizerDashboard = () => <div>Organizer Dashboard</div>;
 const UserDashboard = () => <div>User Dashboard</div>;
 

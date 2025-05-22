@@ -3,41 +3,41 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import Loader from '../shared/Loader';
 
-const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, loading, isAuthenticated } = useUser();
+const ProtectedRoute = ({ children, roles = [], redirectPath = '/login' }) => {
+  const { user, isAuthenticated, loading } = useUser();
   const location = useLocation();
 
-  // Show loading state while checking authentication
+  // Show loader while checking authentication
   if (loading) {
-    return <Loader size="large" />;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Loader 
+          type="spinner"
+          size="large"
+          text="Checking authentication..."
+        />
+      </div>
+    );
   }
 
-  // If not authenticated, redirect to login
+  // Not authenticated - redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // If no specific roles are required, allow access
-  if (allowedRoles.length === 0) {
-    return children;
+  // Check role-based access if roles are specified
+  if (roles.length > 0 && !roles.includes(user?.role)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  // Check if user's role is allowed
-  if (!allowedRoles.includes(user.role)) {
-    // Redirect to appropriate page based on role
-    switch (user.role) {
-      case 'admin':
-        return <Navigate to="/admin/dashboard" replace />;
-      case 'organizer':
-        return <Navigate to="/organizer/dashboard" replace />;
-      case 'user':
-        return <Navigate to="/user/dashboard" replace />;
-      default:
-        return <Navigate to="/" replace />;
-    }
-  }
+  // Store the last visited protected route
+  localStorage.setItem('lastProtectedRoute', location.pathname);
 
-  // If user's role is allowed, render the protected component
   return children;
 };
 
