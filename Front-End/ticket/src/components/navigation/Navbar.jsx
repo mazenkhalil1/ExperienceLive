@@ -85,9 +85,14 @@ function Navbar() {
                 Profile
               </Link>
               {user?.role === 'admin' && (
-                <Link to="/admin/dashboard" style={linkStyle}>
-                  Admin Dashboard
-                </Link>
+                <>
+                  <Link to="/admin/dashboard" style={linkStyle}>
+                    Admin Dashboard
+                  </Link>
+                  <Link to="/admin/users" style={linkStyle}>
+                    Manage Users
+                  </Link>
+                </>
               )}
               {user?.role === 'organizer' && (
                 <Link to="/organizer/dashboard" style={linkStyle}>
