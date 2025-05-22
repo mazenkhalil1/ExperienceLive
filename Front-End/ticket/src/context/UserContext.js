@@ -41,6 +41,11 @@ export function UserProvider({ children }) {
     setError(null);
   };
 
+  const updateUser = (userData) => {
+    setUser(userData);
+    setError(null);
+  };
+
   const value = {
     user,
     loading,
@@ -48,6 +53,7 @@ export function UserProvider({ children }) {
     isAuthenticated,
     login,
     logout,
+    updateUser,
     refreshUser: fetchUser
   };
 
@@ -60,8 +66,10 @@ export function UserProvider({ children }) {
 
 export function useUser() {
   const context = useContext(UserContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
-} 
+}
+
+export default UserContext; 

@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import Loader from '../shared/Loader';
 import { showToast } from '../shared/Toast';
 
 const ProfilePage = () => {
   const { user, loading, error } = useUser();
+  const navigate = useNavigate();
 
   const containerStyle = {
     padding: '20px',
@@ -36,6 +38,19 @@ const ProfilePage = () => {
     fontWeight: 'bold',
     marginRight: '10px',
     color: '#666'
+  };
+
+  const buttonStyle = {
+    display: 'block',
+    width: '100%',
+    padding: '10px',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    marginTop: '20px'
   };
 
   if (loading) {
@@ -94,6 +109,27 @@ const ProfilePage = () => {
             <span style={labelStyle}>Member Since:</span>
             <span>{new Date(user.createdAt).toLocaleDateString()}</span>
           </div>
+          {user.profilePicture && (
+            <div style={infoGroupStyle}>
+              <span style={labelStyle}>Profile Picture:</span>
+              <img 
+                src={user.profilePicture} 
+                alt="Profile" 
+                style={{ 
+                  maxWidth: '100px', 
+                  maxHeight: '100px', 
+                  borderRadius: '50%',
+                  marginTop: '10px'
+                }} 
+              />
+            </div>
+          )}
+          <button 
+            onClick={() => navigate('/update-profile')}
+            style={buttonStyle}
+          >
+            Update Profile
+          </button>
         </div>
       </div>
     </div>
