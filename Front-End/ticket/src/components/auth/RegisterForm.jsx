@@ -26,6 +26,11 @@ function RegisterForm() {
       value: 'organizer',
       label: 'Event Organizer',
       description: 'Create and manage your own events'
+    },
+    {
+      value: 'admin',
+      label: 'Administrator',
+      description: 'Full system access and user management'
     }
   ];
 
