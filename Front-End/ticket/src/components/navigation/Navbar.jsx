@@ -1,11 +1,20 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useUser } from '../../context/UserContext';
 
 function Navbar() {
   const { user, isAuthenticated, logout } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -23,104 +32,147 @@ function Navbar() {
     }
   };
 
-  const navStyle = {
-    backgroundColor: '#333',
-    padding: '1rem',
-    color: 'white'
+  const styles = {
+    nav: {
+      backgroundColor: '#333',
+      padding: '1rem',
+      color: 'white',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1000,
+    },
+    container: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      maxWidth: '1200px',
+      margin: '0 auto',
+      padding: '0 1rem',
+    },
+    brand: {
+      fontSize: '1.5rem',
+      fontWeight: 'bold',
+      color: 'white',
+      textDecoration: 'none',
+    },
+    navLinks: {
+      display: windowWidth > 768 ? 'flex' : isMobileMenuOpen ? 'flex' : 'none',
+      flexDirection: windowWidth > 768 ? 'row' : 'column',
+      gap: '1rem',
+      alignItems: windowWidth > 768 ? 'center' : 'flex-start',
+      position: windowWidth > 768 ? 'static' : 'absolute',
+      top: windowWidth > 768 ? 'auto' : '100%',
+      left: 0,
+      right: 0,
+      backgroundColor: windowWidth > 768 ? 'transparent' : '#333',
+      padding: windowWidth > 768 ? 0 : '1rem',
+    },
+    link: (isActive) => ({
+      color: 'white',
+      textDecoration: 'none',
+      padding: '0.5rem 1rem',
+      borderRadius: '4px',
+      transition: 'background-color 0.2s',
+      backgroundColor: isActive ? '#555' : 'transparent',
+      '&:hover': {
+        backgroundColor: '#444',
+      },
+    }),
+    button: {
+      backgroundColor: '#dc3545',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      color: 'white',
+      padding: '0.5rem 1rem',
+      borderRadius: '4px',
+      transition: 'background-color 0.2s',
+    },
+    hamburger: {
+      display: windowWidth <= 768 ? 'block' : 'none',
+      background: 'none',
+      border: 'none',
+      color: 'white',
+      fontSize: '1.5rem',
+      cursor: 'pointer',
+    },
+    userAvatar: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      padding: '0.5rem',
+      borderRadius: '4px',
+      backgroundColor: '#444',
+    },
+    avatarImage: {
+      width: '30px',
+      height: '30px',
+      borderRadius: '50%',
+      objectFit: 'cover',
+    },
   };
 
-  const containerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0 1rem'
-  };
-
-  const brandStyle = {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: 'white',
-    textDecoration: 'none'
-  };
-
-  const navLinksStyle = {
-    display: 'flex',
-    gap: '1rem',
-    alignItems: 'center'
-  };
-
-  const linkStyle = {
-    color: 'white',
-    textDecoration: 'none',
-    padding: '0.5rem 1rem',
-    borderRadius: '4px',
-    transition: 'background-color 0.2s'
-  };
-
-  const buttonStyle = {
-    ...linkStyle,
-    backgroundColor: '#dc3545',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '1rem'
-  };
-
-  const buttonHoverStyle = {
-    backgroundColor: '#c82333'
+  const NavLink = ({ to, children }) => {
+    const isActive = location.pathname === to;
+    return (
+      <Link to={to} style={styles.link(isActive)}>
+        {children}
+      </Link>
+    );
   };
 
   return (
-    <nav style={navStyle}>
-      <div style={containerStyle}>
-        <Link to="/" style={brandStyle}>
+    <nav style={styles.nav}>
+      <div style={styles.container}>
+        <Link to="/" style={styles.brand}>
           Ticketing System
         </Link>
 
-        <div style={navLinksStyle}>
+        <button
+          style={styles.hamburger}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          ☰
+        </button>
+
+        <div style={styles.navLinks}>
           {isAuthenticated ? (
             <>
-              <Link to="/profile" style={linkStyle}>
-                Profile
-              </Link>
+              <div style={styles.userAvatar}>
+                <img
+                  src={user?.profilePicture || '/default-avatar.png'}
+                  alt="User avatar"
+                  style={styles.avatarImage}
+                />
+                <span>{user?.name}</span>
+              </div>
+              <NavLink to="/profile">Profile</NavLink>
               {user?.role === 'admin' && (
                 <>
-                  <Link to="/admin/dashboard" style={linkStyle}>
-                    Admin Dashboard
-                  </Link>
-                  <Link to="/admin/users" style={linkStyle}>
-                    Manage Users
-                  </Link>
+                  <NavLink to="/admin/dashboard">Admin Dashboard</NavLink>
+                  <NavLink to="/admin/users">Manage Users</NavLink>
                 </>
               )}
               {user?.role === 'organizer' && (
-                <Link to="/organizer/dashboard" style={linkStyle}>
-                  Organizer Dashboard
-                </Link>
+                <NavLink to="/organizer/dashboard">Organizer Dashboard</NavLink>
               )}
               {user?.role === 'user' && (
-                <Link to="/user/dashboard" style={linkStyle}>
-                  User Dashboard
-                </Link>
+                <NavLink to="/user/dashboard">User Dashboard</NavLink>
               )}
               <button 
                 onClick={handleLogout}
-                style={buttonStyle}
-                onMouseOver={(e) => e.target.style.backgroundColor = buttonHoverStyle.backgroundColor}
-                onMouseOut={(e) => e.target.style.backgroundColor = buttonStyle.backgroundColor}
+                style={styles.button}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#c82333'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#dc3545'}
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" style={linkStyle}>
-                Login
-              </Link>
-              <Link to="/register" style={linkStyle}>
-                Register
-              </Link>
+              <NavLink to="/login">Login</NavLink>
+              <NavLink to="/register">Register</NavLink>
             </>
           )}
         </div>
