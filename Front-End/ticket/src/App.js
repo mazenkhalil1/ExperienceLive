@@ -7,6 +7,7 @@ import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import ForgetPasswordForm from './components/auth/ForgetPasswordForm';
 import ProfilePage from './components/profile/ProfilePage';
+import UpdateProfile from './components/profile/UpdateProfile';
 import Navbar from './components/navigation/Navbar';
 import Footer from './components/shared/Footer';
 import Toast from './components/shared/Toast';
@@ -47,6 +48,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProfilePage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/update-profile" 
+                element={
+                  <ProtectedRoute>
+                    <UpdateProfile />
                   </ProtectedRoute>
                 } 
               />
