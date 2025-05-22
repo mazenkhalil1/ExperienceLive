@@ -97,6 +97,7 @@ exports.updateProfile = async (req, res, next) => {
 // Update user role (Admin only)
 exports.updateUserRole = async (req, res, next) => {
   try {
+    console.log('Attempting to update user role for ID:', req.params.id);
     const { role } = req.body;
 
     if (!["user", "organizer", "admin"].includes(role)) {
@@ -131,6 +132,7 @@ exports.updateUserRole = async (req, res, next) => {
 // Delete user (Admin only)
 exports.deleteUser = async (req, res, next) => {
   try {
+    console.log('Attempting to delete user with ID:', req.params.id);
     const user = await User.findByIdAndDelete(req.params.id);
 
     if (!user) {
