@@ -2,77 +2,162 @@ import React from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Custom toast styles
-const toastStyles = {
-  success: {
-    background: '#d4edda',
-    color: '#155724',
-    border: '1px solid #c3e6cb'
-  },
-  error: {
-    background: '#f8d7da',
-    color: '#721c24',
-    border: '1px solid #f5c6cb'
-  },
-  info: {
-    background: '#d1ecf1',
-    color: '#0c5460',
-    border: '1px solid #bee5eb'
-  },
-  warning: {
-    background: '#fff3cd',
-    color: '#856404',
-    border: '1px solid #ffeeba'
-  }
+const defaultConfig = {
+  position: 'top-right',
+  autoClose: 5000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
 };
 
-// Toast notification functions
-export const showToast = {
-  success: (message) => {
-    toast.success(message, {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      style: toastStyles.success
-    });
-  },
-  error: (message) => {
-    toast.error(message, {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      style: toastStyles.error
-    });
-  },
-  info: (message) => {
-    toast.info(message, {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      style: toastStyles.info
-    });
-  },
-  warning: (message) => {
-    toast.warning(message, {
-      position: "top-right",
-      autoClose: 4000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      style: toastStyles.warning
-    });
-  }
+const createToastContent = (message, action) => {
+  if (!action) return message;
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <span>{message}</span>
+      <button
+        onClick={action.onClick}
+        style={{
+          marginLeft: '1rem',
+          padding: '0.25rem 0.75rem',
+          backgroundColor: '#fff',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+        }}
+      >
+        {action.label}
+      </button>
+    </div>
+  );
 };
+
+export const showToast = {
+  success: (message, action = null, config = {}) => {
+    toast.success(createToastContent(message, action), {
+      ...defaultConfig,
+      ...config,
+      className: 'toast-success',
+      style: {
+        background: '#4caf50',
+        color: '#fff',
+      },
+    });
+  },
+
+  error: (message, action = null, config = {}) => {
+    toast.error(createToastContent(message, action), {
+      ...defaultConfig,
+      ...config,
+      className: 'toast-error',
+      style: {
+        background: '#f44336',
+        color: '#fff',
+      },
+    });
+  },
+
+  warning: (message, action = null, config = {}) => {
+    toast.warning(createToastContent(message, action), {
+      ...defaultConfig,
+      ...config,
+      className: 'toast-warning',
+      style: {
+        background: '#ff9800',
+        color: '#fff',
+      },
+    });
+  },
+
+  info: (message, action = null, config = {}) => {
+    toast.info(createToastContent(message, action), {
+      ...defaultConfig,
+      ...config,
+      className: 'toast-info',
+      style: {
+        background: '#2196f3',
+        color: '#fff',
+      },
+    });
+  },
+
+  custom: (message, options = {}) => {
+    const {
+      type = 'default',
+      action = null,
+      icon = null,
+      style = {},
+      ...rest
+    } = options;
+
+    toast(
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {icon && <span className="toast-icon">{icon}</span>}
+        {createToastContent(message, action)}
+      </div>,
+      {
+        ...defaultConfig,
+        ...rest,
+        className: `toast-${type}`,
+        style: {
+          background: '#fff',
+          color: '#333',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          ...style,
+        },
+      }
+    );
+  },
+};
+
+// CSS to be added to your global styles
+const toastStyles = `
+  .Toastify__toast {
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  .Toastify__toast-body {
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+  }
+
+  .Toastify__progress-bar {
+    height: 3px;
+  }
+
+  .toast-success .Toastify__progress-bar {
+    background: rgba(255,255,255,0.7);
+  }
+
+  .toast-error .Toastify__progress-bar {
+    background: rgba(255,255,255,0.7);
+  }
+
+  .toast-warning .Toastify__progress-bar {
+    background: rgba(255,255,255,0.7);
+  }
+
+  .toast-info .Toastify__progress-bar {
+    background: rgba(255,255,255,0.7);
+  }
+
+  .toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+// Add styles to document
+const style = document.createElement('style');
+style.textContent = toastStyles;
+document.head.appendChild(style);
 
 // Toast container component
 const Toast = () => {

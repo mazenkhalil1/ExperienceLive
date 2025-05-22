@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { useUser } from '../../context/UserContext';
 import { showToast } from '../shared/Toast';
+import axiosInstance from '../../services/axiosConfig';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -16,21 +16,35 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:5000/api/v1/login', {
+      const res = await axiosInstance.post('/login', {
         email,
         password
-      }, { 
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
       });
+
+      // Store token in localStorage
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+      }
 
       // Update user context with the user data
       if (res.data.user) {
         login(res.data.user);
         showToast.success('Login successful!');
-        navigate('/profile');
+        
+        // Redirect based on role
+        switch (res.data.user.role) {
+          case 'admin':
+            navigate('/admin/dashboard');
+            break;
+          case 'organizer':
+            navigate('/organizer/dashboard');
+            break;
+          case 'user':
+            navigate('/user/dashboard');
+            break;
+          default:
+            navigate('/profile');
+        }
       } else {
         throw new Error('No user data received');
       }
