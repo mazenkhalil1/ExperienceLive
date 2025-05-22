@@ -5,19 +5,27 @@ import ConfirmationDialog from './ConfirmationDialog';
 const UserRow = ({ user, onUpdateRole, onDelete }) => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleUpdateRole = (newRole) => {
-    console.log('UserRow: handleUpdateRole triggered for user ID:', user._id);
-    console.log('UserRow: Calling onUpdateRole prop');
-    onUpdateRole(user._id, newRole);
-    setIsUpdateModalOpen(false);
+  const handleUpdateRole = async (newRole) => {
+    setIsUpdating(true);
+    try {
+      await onUpdateRole(user._id, newRole);
+    } finally {
+      setIsUpdating(false);
+      setIsUpdateModalOpen(false);
+    }
   };
 
-  const handleDelete = () => {
-    console.log('UserRow: handleDelete triggered for user ID:', user._id);
-    console.log('UserRow: Calling onDelete prop');
-    onDelete(user._id);
-    setIsDeleteDialogOpen(false);
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(user._id);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
   };
 
   return (
@@ -40,15 +48,17 @@ const UserRow = ({ user, onUpdateRole, onDelete }) => {
         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
           <button
             onClick={() => setIsUpdateModalOpen(true)}
-            className="text-indigo-600 hover:text-indigo-900 mr-4"
+            className={`text-indigo-600 hover:text-indigo-900 mr-4 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isUpdating}
           >
-            Update Role
+            {isUpdating ? 'Updating...' : 'Update Role'}
           </button>
           <button
             onClick={() => setIsDeleteDialogOpen(true)}
-            className="text-red-600 hover:text-red-900"
+            className={`text-red-600 hover:text-red-900 ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isDeleting}
           >
-            Delete
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         </td>
       </tr>
