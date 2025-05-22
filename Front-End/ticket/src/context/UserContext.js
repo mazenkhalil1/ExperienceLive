@@ -29,6 +29,12 @@ export function UserProvider({ children }) {
     fetchUser();
   }, []);
 
+  const login = (userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    setError(null);
+  };
+
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -40,6 +46,7 @@ export function UserProvider({ children }) {
     loading,
     error,
     isAuthenticated,
+    login,
     logout,
     refreshUser: fetchUser
   };
