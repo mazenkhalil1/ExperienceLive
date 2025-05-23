@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useCallback } from 'react';
+import axiosInstance from '../../services/axiosConfig';
+import { showToast } from '../shared/Toast';
+import Loader from '../shared/Loader';
 import {
   BarChart,
   Bar,
@@ -11,7 +13,9 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  LineChart,
+  Line
 } from 'recharts';
 
 const EventAnalytics = ({ eventId }) => {
@@ -19,85 +23,141 @@ const EventAnalytics = ({ eventId }) => {
   const [error, setError] = useState(null);
   const [analytics, setAnalytics] = useState(null);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [eventId, fetchAnalytics]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/v1/users/events/analytics/${eventId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      setAnalytics(response.data);
-      setLoading(false);
+      const response = await axiosInstance.get(`/events/${eventId}/analytics`);
+      setAnalytics(response.data.data);
+      setError(null);
     } catch (err) {
-      setError('Failed to fetch analytics data');
+      console.error('Error fetching analytics:', err);
+      setError(err.response?.data?.message || 'Failed to fetch analytics data');
+      showToast.error(err.response?.data?.message || 'Failed to fetch analytics data');
+    } finally {
       setLoading(false);
     }
+  }, [eventId]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchAnalytics}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <p className="text-gray-500">No analytics data available</p>
+      </div>
+    );
+  }
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const TICKET_STATUS_COLORS = {
+    available: '#00C49F',
+    booked: '#0088FE',
+    cancelled: '#FF8042'
   };
 
-  if (loading) return <div className="text-center py-4">Loading analytics...</div>;
-  if (error) return <div className="text-center text-red-500 py-4">{error}</div>;
-  if (!analytics) return <div className="text-center py-4">No analytics data available</div>;
-
-  const COLORS = ['#0088FE', '#00C49F'];
-
   // Prepare data for pie chart
-  const pieData = [
+  const ticketDistributionData = [
     { name: 'Booked', value: analytics.bookedTickets },
     { name: 'Available', value: analytics.availableTickets },
-  ];
+    { name: 'Cancelled', value: analytics.cancelledTickets || 0 }
+  ].filter(item => item.value > 0);
 
   // Prepare data for booking trend
-  const trendData = analytics.bookingTrend.map(item => ({
+  const bookingTrendData = analytics.bookingTrend.map(item => ({
     date: new Date(item.date).toLocaleDateString(),
     bookings: item.count,
+    revenue: item.revenue
   }));
+
+  // Calculate revenue metrics
+  const totalRevenue = analytics.revenue;
+  const averageRevenuePerTicket = totalRevenue / analytics.bookedTickets || 0;
 
   return (
     <div className="space-y-8">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-blue-800">Total Tickets</h3>
+          <h3 className="text-sm font-medium text-blue-800">Total Tickets</h3>
           <p className="text-2xl font-bold text-blue-600">
             {analytics.totalTickets}
           </p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-green-800">Tickets Booked</h3>
+          <h3 className="text-sm font-medium text-green-800">Tickets Booked</h3>
           <p className="text-2xl font-bold text-green-600">
             {analytics.bookedTickets}
           </p>
+          <p className="text-sm text-green-600">
+            {((analytics.bookedTickets / analytics.totalTickets) * 100).toFixed(1)}% of total
+          </p>
+        </div>
+        <div className="bg-yellow-50 p-4 rounded-lg">
+          <h3 className="text-sm font-medium text-yellow-800">Available Tickets</h3>
+          <p className="text-2xl font-bold text-yellow-600">
+            {analytics.availableTickets}
+          </p>
+          <p className="text-sm text-yellow-600">
+            {((analytics.availableTickets / analytics.totalTickets) * 100).toFixed(1)}% remaining
+          </p>
         </div>
         <div className="bg-purple-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-purple-800">Revenue</h3>
+          <h3 className="text-sm font-medium text-purple-800">Total Revenue</h3>
           <p className="text-2xl font-bold text-purple-600">
-            ${analytics.revenue.toFixed(2)}
+            ${totalRevenue.toFixed(2)}
+          </p>
+          <p className="text-sm text-purple-600">
+            ${averageRevenuePerTicket.toFixed(2)} per ticket
           </p>
         </div>
       </div>
 
       {/* Ticket Distribution */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold mb-4">Ticket Distribution</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={pieData}
+                data={ticketDistributionData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, value, percent }) => `${name} (${value}, ${(percent * 100).toFixed(0)}%)`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
               >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {ticketDistributionData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={TICKET_STATUS_COLORS[entry.name.toLowerCase()] || COLORS[index % COLORS.length]} 
+                  />
                 ))}
               </Pie>
               <Tooltip />
@@ -108,37 +168,54 @@ const EventAnalytics = ({ eventId }) => {
       </div>
 
       {/* Booking Trend */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold mb-4">Booking Trend</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={trendData}>
+            <LineChart data={bookingTrendData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
-              <YAxis />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
               <Tooltip />
               <Legend />
-              <Bar dataKey="bookings" fill="#8884d8" name="Tickets Booked" />
-            </BarChart>
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="bookings"
+                stroke="#0088FE"
+                name="Bookings"
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="revenue"
+                stroke="#00C49F"
+                name="Revenue ($)"
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-2">Booking Rate</h3>
-          <p className="text-3xl font-bold text-indigo-600">
-            {((analytics.bookedTickets / analytics.totalTickets) * 100).toFixed(1)}%
-          </p>
-          <p className="text-sm text-gray-500">of total tickets booked</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-2">Average Daily Bookings</h3>
-          <p className="text-3xl font-bold text-indigo-600">
-            {(analytics.averageDailyBookings || 0).toFixed(1)}
-          </p>
-          <p className="text-sm text-gray-500">tickets per day</p>
+      {/* Revenue Analysis */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4">Revenue Analysis</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-600">Total Revenue</h4>
+            <p className="text-2xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-600">Average Revenue/Ticket</h4>
+            <p className="text-2xl font-bold text-gray-900">${averageRevenuePerTicket.toFixed(2)}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-600">Projected Revenue</h4>
+            <p className="text-2xl font-bold text-gray-900">
+              ${(analytics.availableTickets * analytics.price).toFixed(2)}
+            </p>
+          </div>
         </div>
       </div>
     </div>
