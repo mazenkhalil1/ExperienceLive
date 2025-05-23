@@ -155,7 +155,7 @@ function Navbar() {
                 </>
               )}
               {user?.role === 'organizer' && (
-                <NavLink to="/organizer/dashboard">Organizer Dashboard</NavLink>
+                <NavLink to="/organizer/events">My Events</NavLink>
               )}
               {user?.role === 'user' && (
                 <NavLink to="/user/dashboard">User Dashboard</NavLink>
