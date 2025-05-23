@@ -4,7 +4,7 @@ import { useUser } from '../../context/UserContext';
 import Loader from '../shared/Loader';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, isAuthenticated, isLoading } = useUser();
+  const { user, isAuthenticated, isLoading, userRole } = useUser();
   const location = useLocation();
 
   // Show loader while checking authentication
@@ -17,15 +17,20 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // Not authenticated - redirect to login with return path
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   // Check role-based access if roles are specified
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
-    // Redirect to appropriate dashboard based on user's role
-    const roleBasedPath = getRoleBasedPath(user?.role);
-    return <Navigate to={roleBasedPath} replace />;
+  if (allowedRoles.length > 0) {
+    const currentRole = userRole || user.role;
+    
+    if (!currentRole || !allowedRoles.includes(currentRole)) {
+      // Redirect to appropriate dashboard based on user's role
+      const roleBasedPath = getRoleBasedPath(currentRole);
+      console.log(`Unauthorized access. Required roles: ${allowedRoles.join(', ')}, Current role: ${currentRole}`);
+      return <Navigate to={roleBasedPath} replace />;
+    }
   }
 
   // Render children if all checks pass
@@ -42,7 +47,7 @@ const getRoleBasedPath = (role) => {
     case 'user':
       return '/events';
     default:
-      return '/profile';
+      return '/login';
   }
 };
 

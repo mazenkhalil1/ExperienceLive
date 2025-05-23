@@ -7,6 +7,8 @@ import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import ForgetPasswordForm from './components/auth/ForgetPasswordForm';
 import ProfilePage from './components/profile/ProfilePage';
+import EventDetails from './components/events/EventDetails';
+import EventList from './components/events/EventList';
 import Navbar from './components/navigation/Navbar';
 import Footer from './components/shared/Footer';
 import Toast from './components/shared/Toast';
@@ -15,31 +17,12 @@ import AdminUsersPage from './components/AdminUsersPage';
 import MyEventsPage from './components/events/MyEventsPage';
 import EventForm from './components/events/EventForm';
 import EventAnalytics from './components/events/EventAnalytics';
-
-// Placeholder components for different user roles
-const AdminDashboard = () => (
-  <Routes>
-    <Route path="dashboard" element={<div>Admin Dashboard</div>} />
-    <Route path="users" element={<AdminUsersPage />} />
-    <Route path="*" element={<Navigate to="dashboard" replace />} />
-  </Routes>
-);
-const OrganizerDashboard = () => (
-  <Routes>
-    <Route path="events" element={<MyEventsPage />} />
-    <Route path="events/new" element={<EventForm />} />
-    <Route path="events/edit/:id" element={<EventForm />} />
-    <Route path="events/analytics/:id" element={<EventAnalytics />} />
-    <Route path="dashboard" element={<MyEventsPage />} />
-    <Route path="*" element={<Navigate to="events" replace />} />
-  </Routes>
-);
-const UserDashboard = () => <div>User Dashboard</div>;
+import AdminEventsPage from './components/events/AdminEventsPage';
 
 function App() {
   return (
-    <UserProvider>
-      <Router>
+    <Router>
+      <UserProvider>
         <div style={{ 
           minHeight: '100vh',
           display: 'flex',
@@ -49,76 +32,69 @@ function App() {
           <main style={{ flex: 1, padding: '20px 0' }}>
             <Routes>
               {/* Public routes */}
+              <Route path="/" element={<EventList />} />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/register" element={<RegisterForm />} />
               <Route path="/forget-password" element={<ForgetPasswordForm />} />
+              <Route path="/events/:id" element={<EventDetails />} />
 
-              {/* Protected routes */}
+              {/* Protected profile route - accessible by all authenticated users */}
               <Route 
                 path="/profile" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedRoles={['admin', 'organizer', 'user']}>
                     <ProfilePage />
                   </ProtectedRoute>
                 } 
               />
 
-              {/* Role-specific routes */}
+              {/* Admin routes */}
               <Route 
                 path="/admin/*" 
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
+                    <Routes>
+                      <Route path="dashboard" element={<AdminUsersPage />} />
+                      <Route path="users" element={<AdminUsersPage />} />
+                      <Route path="events" element={<AdminEventsPage />} />
+                      <Route path="*" element={<Navigate to="dashboard" replace />} />
+                    </Routes>
                   </ProtectedRoute>
                 } 
               />
+              
+              {/* Organizer routes */}
               <Route 
                 path="/organizer/*" 
                 element={
                   <ProtectedRoute allowedRoles={['organizer']}>
-                    <OrganizerDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/user/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <UserDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Default route - redirect based on role */}
-              <Route 
-                path="/" 
-                element={
-                  <ProtectedRoute>
-                    {({ user }) => {
-                      switch (user?.role) {
-                        case 'admin':
-                          return <Navigate to="/admin/dashboard" replace />;
-                        case 'organizer':
-                          return <Navigate to="/organizer/dashboard" replace />;
-                        case 'user':
-                          return <Navigate to="/user/dashboard" replace />;
-                        default:
-                          return <Navigate to="/login" replace />;
-                      }
-                    }}
+                    <Routes>
+                      <Route path="events" element={<MyEventsPage />} />
+                      <Route path="events/new" element={<EventForm />} />
+                      <Route path="events/edit/:id" element={<EventForm />} />
+                      <Route path="analytics" element={<EventAnalytics />} />
+                      <Route path="*" element={<Navigate to="events" replace />} />
+                    </Routes>
                   </ProtectedRoute>
                 } 
               />
 
-              {/* Catch all route */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              {/* Protected User routes */}
+              <Route 
+                path="/my-events" 
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'organizer']}>
+                    <EventList userOnly={true} />
+                  </ProtectedRoute>
+                } 
+              />
             </Routes>
           </main>
           <Footer />
           <Toast />
         </div>
-      </Router>
-    </UserProvider>
+      </UserProvider>
+    </Router>
   );
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import axiosInstance from '../../services/axiosConfig';
+import { showToast } from '../shared/Toast';
+import Loader from '../shared/Loader';
 
 const AdminEventsPage = () => {
   const [events, setEvents] = useState([]);
@@ -14,39 +15,39 @@ const AdminEventsPage = () => {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/v1/events/all', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      setEvents(response.data);
+      const response = await axiosInstance.get('/events/all');
+      if (response.data.success) {
+        setEvents(response.data.data);
+      } else {
+        throw new Error('Failed to fetch events');
+      }
       setLoading(false);
     } catch (err) {
-      setError('Failed to fetch events');
+      console.error('Error fetching events:', err);
+      setError(err.response?.data?.message || 'Failed to fetch events');
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (eventId, newStatus) => {
+  const handleStatusChange = async (eventId, status) => {
     try {
-      await axios.put(
-        `http://localhost:5000/api/v1/events/${eventId}/${newStatus}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
+      const response = await axiosInstance.put(`/events/${eventId}`, {
+        status: status
+      });
       
-      // Update local state
-      setEvents(events.map(event => 
-        event._id === eventId ? { ...event, status: newStatus } : event
-      ));
-      
-      toast.success(`Event ${newStatus} successfully`);
+      if (response.data.success) {
+        // Update local state
+        setEvents(events.map(event => 
+          event._id === eventId ? { ...event, status } : event
+        ));
+        
+        showToast.success(`Event ${status} successfully`);
+      } else {
+        throw new Error('Failed to update event status');
+      }
     } catch (err) {
-      toast.error(`Failed to ${newStatus} event`);
+      console.error('Error updating event status:', err);
+      showToast.error(err.response?.data?.message || `Failed to update event status`);
     }
   };
 
@@ -54,8 +55,8 @@ const AdminEventsPage = () => {
     statusFilter === 'all' || event.status === statusFilter
   );
 
-  if (loading) return <div className="text-center py-4">Loading events...</div>;
-  if (error) return <div className="text-center text-red-500 py-4">{error}</div>;
+  if (loading) return <Loader />;
+  if (error) return <div className="text-center text-red-500 py-8">{error}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
