@@ -29,18 +29,23 @@ const EventForm = () => {
     const now = new Date();
     const eventDate = new Date(formData.date + 'T' + formData.time);
 
-    if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
+    if (!id) {
+      // Validate all fields for new events
+      if (!formData.title?.trim()) errors.title = 'Title is required';
+      if (!formData.description?.trim()) errors.description = 'Description is required';
+      if (!formData.category) errors.category = 'Category is required';
+      if (!formData.price || formData.price < 0) errors.price = 'Valid price is required';
+      if (!formData.image?.trim()) errors.image = 'Image URL is required';
+    }
+
+    // Always validate editable fields (for both new and edit)
     if (!formData.date) errors.date = 'Date is required';
     if (!formData.time) errors.time = 'Time is required';
     if (eventDate <= now) errors.date = 'Event date must be in the future';
-    if (!formData.location.trim()) errors.location = 'Location is required';
-    if (!formData.category) errors.category = 'Category is required';
-    if (!formData.price || formData.price < 0) errors.price = 'Valid price is required';
+    if (!formData.location?.trim()) errors.location = 'Location is required';
     if (!formData.totalTickets || formData.totalTickets < 1) {
       errors.totalTickets = 'Minimum 1 ticket required';
     }
-    if (!formData.image.trim()) errors.image = 'Image URL is required';
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;

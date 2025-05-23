@@ -14,6 +14,7 @@ import Loader from './components/shared/Loader';
 import AdminUsersPage from './components/AdminUsersPage';
 import MyEventsPage from './components/events/MyEventsPage';
 import EventForm from './components/events/EventForm';
+import EventAnalytics from './components/events/EventAnalytics';
 
 // Placeholder components for different user roles
 const AdminDashboard = () => (
@@ -28,6 +29,7 @@ const OrganizerDashboard = () => (
     <Route path="events" element={<MyEventsPage />} />
     <Route path="events/new" element={<EventForm />} />
     <Route path="events/edit/:id" element={<EventForm />} />
+    <Route path="events/analytics/:id" element={<EventAnalytics />} />
     <Route path="dashboard" element={<MyEventsPage />} />
     <Route path="*" element={<Navigate to="events" replace />} />
   </Routes>

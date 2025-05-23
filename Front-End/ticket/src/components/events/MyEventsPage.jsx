@@ -267,10 +267,7 @@ const MyEventsPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       <button
-                        onClick={() => {
-                          setSelectedEvent(event);
-                          setShowAnalytics(true);
-                        }}
+                        onClick={() => navigate(`/organizer/events/analytics/${event._id}`)}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         Analytics
