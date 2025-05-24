@@ -88,7 +88,7 @@ function ThemedApp() {
             {/* Public routes */}
             <Route path="/" element={<EventList events={events} />} />
             <Route path="/forget-password" element={<ForgetPasswordForm />} />
-            <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/events/:id" element={<EventDetails openLoginModal={openLoginModal} />} />
 
             {/* Protected profile route - accessible by all authenticated users */}
             <Route 

@@ -6,11 +6,13 @@ import { showToast } from '../shared/Toast';
 import Loader from '../shared/Loader';
 import { useUser } from '../../context/UserContext';
 import BookTicketForm from '../bookings/BookTicketForm';
+import { useTheme } from '../../context/ThemeContext';
 
-const EventDetails = () => {
+const EventDetails = ({ openLoginModal }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useUser();
+  const { isDarkMode } = useTheme();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -288,7 +290,7 @@ const EventDetails = () => {
               )
             ) : (
               <motion.button
-                onClick={() => navigate('/login', { state: { from: `/events/${id}` } })}
+                onClick={openLoginModal}
                 className="w-full md:w-auto px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200 shadow-lg hover:shadow-xl"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
