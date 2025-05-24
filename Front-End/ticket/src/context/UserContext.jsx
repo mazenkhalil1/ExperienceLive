@@ -52,11 +52,13 @@ export const UserProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  const login = (userData) => {
+  const login = (userData, token) => {
     // Store complete user data including role
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('userRole', userData.role);
+    // Also store the token
+    localStorage.setItem('token', token);
   };
 
   const handleLogout = async () => {
@@ -71,6 +73,9 @@ export const UserProvider = ({ children }) => {
       localStorage.removeItem('userRole');
       
       showToast.success('Logged out successfully');
+      
+      // Redirect to home page
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
       showToast.error('Error during logout. Please try again.');
@@ -80,6 +85,9 @@ export const UserProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('userRole');
+      
+      // Redirect to home page even if there's an error
+      window.location.href = '/';
     }
   };
 
