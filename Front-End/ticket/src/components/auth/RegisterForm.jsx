@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useUser } from '../../context/UserContext';
 import { showToast } from '../shared/Toast';
 import Loader from '../shared/Loader';
-import axios from 'axios';
+import axiosInstance from '../../services/axiosConfig';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
-  const { login } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -71,7 +69,7 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       showToast.error('Please fix the errors in the form');
       return;
@@ -79,7 +77,7 @@ const RegisterForm = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('/api/v1/register', {
+      const response = await axiosInstance.post('/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -88,11 +86,20 @@ const RegisterForm = () => {
 
       if (response.data) {
         showToast.success('Registration successful! Please login.');
-        navigate('/login'); // Redirect to login instead of automatic login
+        navigate('/login');
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
       showToast.error(errorMessage);
+      
+      // Handle specific error cases
+      if (error.response?.status === 409) {
+        setErrors(prev => ({
+          ...prev,
+          email: 'Email already exists'
+        }));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -245,7 +252,7 @@ const RegisterForm = () => {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
-            style={{
+            style={{ 
               ...styles.input,
               borderColor: errors.confirmPassword ? '#dc3545' : '#ddd',
             }}
@@ -260,7 +267,7 @@ const RegisterForm = () => {
           <label htmlFor="role" style={styles.label}>Role</label>
           <select
             id="role"
-            name="role"
+                    name="role"
             value={formData.role}
             onChange={handleChange}
             style={styles.select}
@@ -270,7 +277,7 @@ const RegisterForm = () => {
           </select>
         </div>
 
-        <button
+        <button 
           type="submit"
           style={styles.button}
           disabled={isLoading}
