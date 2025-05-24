@@ -33,9 +33,18 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
-      // Clear token and redirect to login
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Clear all auth data
+      clearAuth();
+      localStorage.removeItem('user');
+      localStorage.removeItem('userRole');
+      
+      // Only redirect if not already on login page and not trying to logout
+      const isLoginPage = window.location.pathname === '/login';
+      const isLogoutRequest = error.config.url === '/logOut';
+      
+      if (!isLoginPage && !isLogoutRequest) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -43,7 +52,9 @@ axiosInstance.interceptors.response.use(
 
 // Function to check if user is authenticated
 export const isAuthenticated = () => {
-  return !!localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  return !!(token && user);
 };
 
 // Function to get the current token
