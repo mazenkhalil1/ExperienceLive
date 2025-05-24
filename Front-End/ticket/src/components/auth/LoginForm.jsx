@@ -8,59 +8,84 @@ function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useUser();
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Email validation
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
+    if (!validateForm()) {
+      showToast.error('Please fix the errors in the form');
+      return;
+    }
+
+    setIsLoading(true);
     try {
+      // Make login request with exact parameters expected by backend
       const res = await axiosInstance.post('/login', {
         email,
         password
       });
 
-      // Store token in localStorage
-      if (res.data.token) {
-        localStorage.setItem('token', res.data.token);
+      // Verify response structure matches backend
+      if (!res.data.success || !res.data.token || !res.data.user) {
+        throw new Error('Invalid response format from server');
       }
 
-      // Update user context with the user data
-      if (res.data.user) {
-        login(res.data.user);
-        showToast.success('Login successful!');
-        
-        // Get the redirect path from location state or use role-based default
-        const redirectPath = location.state?.from || getRoleBasedRedirect(res.data.user.role);
-        navigate(redirectPath, { replace: true });
-      } else {
-        throw new Error('No user data received');
-      }
+      // Store token
+      localStorage.setItem('token', res.data.token);
+
+      // Process user data ensuring all required fields are present
+      const userData = {
+        id: res.data.user.id,
+        name: res.data.user.name,
+        email: res.data.user.email,
+        role: res.data.user.role || 'user'
+      };
+
+      // Store user data in localStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('userRole', userData.role);
+
+      // Update context
+      login(userData);
+      showToast.success('Login successful!');
+      
+      // Always redirect to the landing page (EventList)
+      navigate('/', { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      if (err.response) {
-        showToast.error(err.response.data.message || 'Login failed');
-      } else {
-        showToast.error('Network error. Please try again.');
+      if (err.response?.status === 400) {
+        // Handle validation errors from backend
+        setErrors({
+          email: err.response.data.message,
+          password: err.response.data.message
+        });
       }
+      showToast.error(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Helper function to determine default redirect based on user role
-  const getRoleBasedRedirect = (role) => {
-    switch (role) {
-      case 'admin':
-        return '/admin/dashboard';
-      case 'organizer':
-        return '/organizer/events';
-      case 'user':
-        return '/events';
-      default:
-        return '/profile';
     }
   };
 
@@ -74,24 +99,32 @@ function LoginForm() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+              }}
               required
               disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
               placeholder="Enter your email"
             />
+            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+              }}
               required
               disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
               placeholder="Enter your password"
             />
+            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
           </div>
           <button 
             type="submit"

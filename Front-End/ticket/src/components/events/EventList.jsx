@@ -20,10 +20,7 @@ const EventList = () => {
       if (!response.data) {
         throw new Error('No data received from server');
       }
-      
-      const eventData = response.data.data || [];
-      const approvedEvents = eventData.filter(event => event.status === 'approved');
-      setEvents(approvedEvents);
+      setEvents(response.data.data || []);
       setError(null);
     } catch (err) {
       console.error('Error fetching events:', err);
