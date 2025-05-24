@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { motion } from 'framer-motion';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -22,167 +23,110 @@ const Footer = () => {
     }
   };
 
-  const styles = {
-    footer: {
-      backgroundColor: '#f8f9fa',
-      padding: '2rem 0',
-      marginTop: 'auto',
-      borderTop: '1px solid #dee2e6',
-      width: '100%',
-    },
-    container: {
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '0 1rem',
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-      gap: '2rem',
-    },
-    section: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1rem',
-    },
-    heading: {
-      fontSize: '1.2rem',
-      fontWeight: 'bold',
-      color: '#212529',
-      marginBottom: '0.5rem',
-      position: 'relative',
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        bottom: '-5px',
-        left: 0,
-        width: '50px',
-        height: '2px',
-        backgroundColor: '#007bff',
-      },
-    },
-    link: {
-      color: '#6c757d',
-      textDecoration: 'none',
-      transition: 'color 0.2s',
-      '&:hover': {
-        color: '#007bff',
-      },
-    },
-    copyright: {
-      textAlign: 'center',
-      padding: '1rem 0',
-      marginTop: '2rem',
-      borderTop: '1px solid #dee2e6',
-      color: '#6c757d',
-    },
-    socialLinks: {
-      display: 'flex',
-      gap: '1rem',
-      marginTop: '0.5rem',
-    },
-    newsletterForm: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1rem',
-      marginTop: '1rem',
-    },
-    input: {
-      padding: '0.5rem',
-      borderRadius: '4px',
-      border: '1px solid #dee2e6',
-      fontSize: '1rem',
-    },
-    button: {
-      padding: '0.5rem 1rem',
-      backgroundColor: '#007bff',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s',
-      '&:hover': {
-        backgroundColor: '#0056b3',
-      },
-      '&:disabled': {
-        backgroundColor: '#ccc',
-        cursor: 'not-allowed',
-      },
-    },
-    socialIcon: {
-      width: '24px',
-      height: '24px',
-      transition: 'transform 0.2s',
-      '&:hover': {
-        transform: 'scale(1.1)',
-      },
-    },
-  };
-
   return (
-    <footer style={styles.footer}>
-      <div style={styles.container}>
-        <div style={styles.section}>
-          <h3 style={styles.heading}>About Us</h3>
-          <p style={{ color: '#6c757d' }}>
+    <footer className="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-12 mt-auto border-t border-gray-200 dark:border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+        {/* About Us */}
+        <div className="flex flex-col">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 relative after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-blue-500">
+            About Us
+          </h3>
+          <p className="text-sm leading-relaxed">
             Your trusted platform for event ticketing and management.
             We connect event organizers with attendees seamlessly.
           </p>
-          <div style={styles.socialLinks}>
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-              <img src="/icons/facebook.svg" alt="Facebook" style={styles.socialIcon} />
+          <div className="flex space-x-4 mt-4">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:scale-110 transition-transform duration-200">
+              {/* Replace with actual SVG icons or use a library */}
+              <img src="/icons/facebook.svg" alt="Facebook" className="w-6 h-6" />
             </a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
-              <img src="/icons/twitter.svg" alt="Twitter" style={styles.socialIcon} />
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="hover:scale-110 transition-transform duration-200">
+               {/* Replace with actual SVG icons or use a library */}
+              <img src="/icons/twitter.svg" alt="Twitter" className="w-6 h-6" />
             </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <img src="/icons/linkedin.svg" alt="LinkedIn" style={styles.socialIcon} />
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="hover:scale-110 transition-transform duration-200">
+               {/* Replace with actual SVG icons or use a library */}
+              <img src="/icons/linkedin.svg" alt="LinkedIn" className="w-6 h-6" />
             </a>
           </div>
         </div>
 
-        <div style={styles.section}>
-          <h3 style={styles.heading}>Quick Links</h3>
-          <Link to="/" style={styles.link}>Home</Link>
-          <Link to="/events" style={styles.link}>Events</Link>
-          <Link to="/about" style={styles.link}>About</Link>
-          <Link to="/contact" style={styles.link}>Contact</Link>
+        {/* Quick Links */}
+        <div className="flex flex-col">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 relative after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-blue-500">
+            Quick Links
+          </h3>
+          <Link to="/" className="text-sm hover:text-blue-500 transition-colors duration-200">Home</Link>
+          <Link to="/events" className="text-sm hover:text-blue-500 transition-colors duration-200">Events</Link>
+          <Link to="/about" className="text-sm hover:text-blue-500 transition-colors duration-200">About</Link>
+          <Link to="/contact" className="text-sm hover:text-blue-500 transition-colors duration-200">Contact</Link>
         </div>
 
-        <div style={styles.section}>
-          <h3 style={styles.heading}>Contact Us</h3>
-          <p style={{ color: '#6c757d' }}>
-            Email: support@ticketing.com<br />
+        {/* Contact Us */}
+        <div className="flex flex-col">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 relative after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-blue-500">
+            Contact Us
+          </h3>
+          <p className="text-sm leading-relaxed">
+            Email: <a href="mailto:support@ticketing.com" className="hover:text-blue-500 transition-colors duration-200">support@ticketing.com</a><br />
             Phone: +1 (555) 123-4567<br />
             Address: 123 Event Street, City, Country
           </p>
         </div>
 
-        <div style={styles.section}>
-          <h3 style={styles.heading}>Newsletter</h3>
-          <p style={{ color: '#6c757d' }}>
+        {/* Newsletter */}
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col"
+        >
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 relative after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-blue-500">
+            Newsletter
+          </h3>
+          <p className="text-sm leading-relaxed mb-4">
             Subscribe to our newsletter for updates on upcoming events and exclusive offers.
           </p>
-          <form onSubmit={handleSubscribe} style={styles.newsletterForm}>
+          <form onSubmit={handleSubscribe} className="flex flex-col gap-4">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               required
-              style={styles.input}
+              className="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 transition-colors duration-200"
               aria-label="Email for newsletter"
             />
-            <button
+            <motion.button
               type="submit"
               disabled={isSubscribing}
-              style={styles.button}
+              className={
+                `w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md
+                 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500
+                 disabled:opacity-50 disabled:cursor-not-allowed
+                 transition-colors duration-200
+                 ${isSubscribing ? 'flex items-center justify-center' : ''}`
+              }
+              whileHover={{ scale: isSubscribing ? 1 : 1.02 }}
+              whileTap={{ scale: isSubscribing ? 1 : 0.98 }}
             >
-              {isSubscribing ? 'Subscribing...' : 'Subscribe'}
-            </button>
+              {isSubscribing ? (
+                 <div className="flex items-center">
+                    <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l2-2.647z"></path></svg>
+                    Subscribing...
+                 </div>
+              ) : (
+                'Subscribe'
+              )}
+            </motion.button>
           </form>
-        </div>
+        </motion.div>
+
       </div>
 
-      <div style={styles.copyright}>
+      {/* Copyright */}
+      <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
         © {currentYear} Ticketing System. All rights reserved.
       </div>
     </footer>

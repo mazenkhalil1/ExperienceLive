@@ -153,7 +153,7 @@ exports.deleteUser = async (req, res, next) => {
 // Standard user: View all own bookings
 exports.getUserBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ user: req.user.userId });
+    const bookings = await Booking.find({ user: req.user.userId }).populate('event');
     res.json(bookings);
   } catch (err) {
     console.error(err);
