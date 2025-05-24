@@ -9,6 +9,8 @@ function ForgetPasswordForm() {
   const [step, setStep] = useState(1); // 1: Email entry, 2: OTP verification
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRequestOTP = async (e) => {
@@ -51,6 +53,23 @@ function ForgetPasswordForm() {
     } catch (err) {
       console.error('Password reset error:', err.response?.data || err.message);
       setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await axios.post('http://localhost:5000/api/v1/users/forgot-password', {
+        email,
+      });
+      setSuccess(true);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send reset email');
+    } finally {
+      setLoading(false);
     }
   };
 

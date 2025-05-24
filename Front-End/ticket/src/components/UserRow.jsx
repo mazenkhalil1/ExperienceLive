@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import UpdateUserRoleModal from './UpdateUserRoleModal';
 import ConfirmationDialog from './ConfirmationDialog';
+import UserDetailsModal from './UserDetailsModal';
 
 const UserRow = ({ user, onUpdateRole, onDelete }) => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -30,7 +32,10 @@ const UserRow = ({ user, onUpdateRole, onDelete }) => {
 
   return (
     <>
-      <tr className="hover:bg-gray-50">
+      <tr 
+        className="hover:bg-gray-50 cursor-pointer" 
+        onClick={() => setIsDetailsModalOpen(true)}
+      >
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm font-medium text-gray-900">{user.name}</div>
         </td>
@@ -47,14 +52,20 @@ const UserRow = ({ user, onUpdateRole, onDelete }) => {
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
           <button
-            onClick={() => setIsUpdateModalOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsUpdateModalOpen(true);
+            }}
             className={`text-indigo-600 hover:text-indigo-900 mr-4 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={isUpdating}
           >
             {isUpdating ? 'Updating...' : 'Update Role'}
           </button>
           <button
-            onClick={() => setIsDeleteDialogOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDeleteDialogOpen(true);
+            }}
             className={`text-red-600 hover:text-red-900 ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={isDeleting}
           >
@@ -77,6 +88,12 @@ const UserRow = ({ user, onUpdateRole, onDelete }) => {
         onConfirm={handleDelete}
         title="Delete User"
         message={`Are you sure you want to delete ${user.name}? This action cannot be undone.`}
+      />
+
+      <UserDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        userId={user._id}
       />
     </>
   );
