@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 function ForgetPasswordForm() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ function ForgetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
 
   const handleRequestOTP = async (e) => {
     e.preventDefault();
@@ -74,66 +76,47 @@ function ForgetPasswordForm() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-      <h2>Reset Password</h2>
+    <div className="max-w-sm mx-auto py-8 px-4">
+      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">Reset Password</h2>
       
       {message && (
-        <div style={{ 
-          padding: '10px', 
-          marginBottom: '15px', 
-          backgroundColor: '#d4edda',
-          color: '#155724',
-          borderRadius: '4px'
-        }}>
+        <div className="p-3 mb-4 bg-green-100 text-green-800 rounded-md">
           {message}
         </div>
       )}
 
       {error && (
-        <div style={{ 
-          padding: '10px', 
-          marginBottom: '15px', 
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          borderRadius: '4px'
-        }}>
+        <div className="p-3 mb-4 bg-red-100 text-red-800 rounded-md">
           {error}
         </div>
       )}
 
       {step === 1 ? (
-        <form onSubmit={handleRequestOTP}>
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>Email Address</label>
+        <form onSubmit={handleRequestOTP} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              className={`mt-1 block w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-md shadow-sm focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'}`}
             />
           </div>
           
           <button 
             type="submit" 
-            style={{ 
-              width: '100%', 
-              padding: '10px', 
-              backgroundColor: '#007bff', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: 'pointer' 
-            }}
+            disabled={loading}
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200`}
           >
-            Request OTP
+            {loading ? 'Requesting...' : 'Request OTP'}
           </button>
         </form>
       ) : (
-        <form onSubmit={handleResetPassword}>
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="otp" style={{ display: 'block', marginBottom: '5px' }}>Enter OTP</label>
+        <form onSubmit={handleResetPassword} className="space-y-6">
+          <div>
+            <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Enter OTP</label>
             <input
               id="otp"
               type="text"
@@ -141,12 +124,12 @@ function ForgetPasswordForm() {
               onChange={(e) => setOtp(e.target.value)}
               required
               placeholder="Enter the 6-digit OTP"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              className={`mt-1 block w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-md shadow-sm focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'}`}
             />
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="newPassword" style={{ display: 'block', marginBottom: '5px' }}>New Password</label>
+          <div>
+            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
             <input
               id="newPassword"
               type="password"
@@ -155,36 +138,24 @@ function ForgetPasswordForm() {
               required
               minLength={6}
               placeholder="Enter new password (min. 6 characters)"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              className={`mt-1 block w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-md shadow-sm focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'}`}
             />
           </div>
           
           <button 
             type="submit" 
-            style={{ 
-              width: '100%', 
-              padding: '10px', 
-              backgroundColor: '#007bff', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: 'pointer' 
-            }}
+            disabled={loading}
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200`}
           >
             Reset Password
           </button>
         </form>
       )}
       
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+      <div className="mt-6 text-center">
         <button 
           onClick={() => navigate('/login')} 
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            color: '#007bff', 
-            cursor: 'pointer' 
-          }}
+          className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
         >
           Back to Login
         </button>

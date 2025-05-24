@@ -28,7 +28,8 @@ exports.createEvent = async (req, res, next) => {
       price: req.body.price,
       totalTickets: req.body.totalTickets,
       category: req.body.category,
-      organizer: req.user.userId // This will be converted to ObjectId by Mongoose
+      organizer: req.user.userId, // This will be converted to ObjectId by Mongoose
+      image: req.body.image // Add the image field
     };
 
     console.log('Event data to save:', eventData);
@@ -70,7 +71,7 @@ exports.createEvent = async (req, res, next) => {
 // Get all events (Public - only approved events)
 exports.getEvents = async (req, res, next) => {
   try {
-    const events = await Event.find({ status: "approved" })
+    const events = await Event.find({ status: "approved" }, 'title date location price image')
       .populate("organizer", "name email")
       .sort("-date");
 
@@ -87,7 +88,7 @@ exports.getEvents = async (req, res, next) => {
 // Get all events (Admin - all events)
 exports.getAllEvents = async (req, res, next) => {
   try {
-    const events = await Event.find()
+    const events = await Event.find({}, 'title date location price status image')
       .populate("organizer", "name email")
       .sort("-date");
 
@@ -179,6 +180,11 @@ exports.updateEvent = async (req, res, next) => {
       obj[key] = req.body[key];
       return obj;
     }, {});
+
+    // Add image to updates if provided
+    if (req.body.image) {
+      updates.image = req.body.image;
+    }
 
     event = await Event.findByIdAndUpdate(req.params.id, updates, {
       new: true,

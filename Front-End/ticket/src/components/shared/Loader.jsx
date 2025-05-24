@@ -1,131 +1,92 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const Loader = ({
   type = 'spinner',
   size = 'medium',
-  color = '#007bff',
+  color = 'blue',
   text,
   progress,
 }) => {
   const sizeMap = {
-    small: '20px',
-    medium: '40px',
-    large: '60px'
+    small: 'w-5 h-5',
+    medium: 'w-10 h-10',
+    large: 'w-16 h-16'
   };
 
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '20px',
-      gap: '10px',
-    },
-    spinner: {
-      width: sizeMap[size],
-      height: sizeMap[size],
-      border: `4px solid #f3f3f3`,
-      borderTop: `4px solid ${color}`,
-      borderRadius: '50%',
-      animation: 'spin 1s linear infinite',
-    },
-    skeleton: {
-      width: '100%',
-      height: sizeMap[size],
-      backgroundColor: '#f3f3f3',
-      borderRadius: '4px',
-      position: 'relative',
-      overflow: 'hidden',
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-        animation: 'shimmer 1.5s infinite',
-      },
-    },
-    progress: {
-      width: '100%',
-      height: '8px',
-      backgroundColor: '#f3f3f3',
-      borderRadius: '4px',
-      overflow: 'hidden',
-    },
-    progressBar: {
-      height: '100%',
-      backgroundColor: color,
-      width: `${progress}%`,
-      transition: 'width 0.3s ease',
-    },
-    text: {
-      marginTop: '10px',
-      color: '#666',
-      fontSize: '14px',
-    },
-    dots: {
-      display: 'flex',
-      gap: '5px',
-    },
-    dot: {
-      width: sizeMap.small,
-      height: sizeMap.small,
-      backgroundColor: color,
-      borderRadius: '50%',
-      animation: 'bounce 0.5s alternate infinite',
-    },
-    '@keyframes spin': {
-      '0%': { transform: 'rotate(0deg)' },
-      '100%': { transform: 'rotate(360deg)' },
-    },
-    '@keyframes shimmer': {
-      '0%': { transform: 'translateX(-100%)' },
-      '100%': { transform: 'translateX(100%)' },
-    },
-    '@keyframes bounce': {
-      '0%': { transform: 'translateY(0)' },
-      '100%': { transform: 'translateY(-10px)' },
-    },
+  const colorMap = {
+    blue: 'border-blue-500',
+    green: 'border-green-500',
+    red: 'border-red-500',
+    yellow: 'border-yellow-500',
+    purple: 'border-purple-500',
+    gray: 'border-gray-500'
   };
 
   const renderLoader = () => {
     switch (type) {
       case 'spinner':
-        return <div style={styles.spinner} />;
+        return (
+          <motion.div
+            className={`${sizeMap[size]} border-4 border-gray-200 ${colorMap[color]} rounded-full`}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        );
       case 'skeleton':
-        return <div style={styles.skeleton} />;
+        return (
+          <div className={`${sizeMap[size]} bg-gray-200 rounded-md relative overflow-hidden`}>
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+        );
       case 'progress':
         return (
-          <div style={styles.progress}>
-            <div style={styles.progressBar} />
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full bg-${color}-500`}
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            />
           </div>
         );
       case 'dots':
         return (
-          <div style={styles.dots}>
+          <div className="flex gap-2">
             {[...Array(3)].map((_, i) => (
-              <div
+              <motion.div
                 key={i}
-                style={{
-                  ...styles.dot,
-                  animation: `bounce 0.5s ${i * 0.1}s alternate infinite`,
+                className={`${sizeMap.small} bg-${color}-500 rounded-full`}
+                animate={{ y: [0, -10] }}
+                transition={{
+                  duration: 0.5,
+                  repeat: Infinity,
+                  delay: i * 0.1,
+                  ease: "easeInOut"
                 }}
               />
             ))}
           </div>
         );
       default:
-        return <div style={styles.spinner} />;
+        return (
+          <motion.div
+            className={`${sizeMap[size]} border-4 border-gray-200 ${colorMap[color]} rounded-full`}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        );
     }
   };
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col items-center justify-center p-5 gap-2">
       {renderLoader()}
-      {text && <div style={styles.text}>{text}</div>}
+      {text && <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{text}</p>}
     </div>
   );
 };

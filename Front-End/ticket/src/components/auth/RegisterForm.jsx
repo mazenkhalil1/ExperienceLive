@@ -3,8 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { showToast } from '../shared/Toast';
 import Loader from '../shared/Loader';
 import axiosInstance from '../../services/axiosConfig';
+import { useTheme } from '../../context/ThemeContext';
+import { motion } from 'framer-motion';
 
-const RegisterForm = () => {
+const RegisterForm = ({ closeModal, openLoginModal }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,6 +17,7 @@ const RegisterForm = () => {
     role: 'user'
   });
   const [errors, setErrors] = useState({});
+  const { isDarkMode } = useTheme();
 
   const validateForm = () => {
     const newErrors = {};
@@ -86,7 +89,7 @@ const RegisterForm = () => {
 
       if (response.data) {
         showToast.success('Registration successful! Please login.');
-        navigate('/login');
+        closeModal();
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -105,194 +108,141 @@ const RegisterForm = () => {
     }
   };
 
-  const styles = {
-    container: {
-      maxWidth: '400px',
-      margin: '2rem auto',
-      padding: '2rem',
-      backgroundColor: '#fff',
-      borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    },
-    title: {
-      textAlign: 'center',
-      marginBottom: '2rem',
-      color: '#333',
-    },
-    form: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1rem',
-    },
-    formGroup: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-    },
-    label: {
-      fontSize: '0.9rem',
-      color: '#666',
-    },
-    input: {
-      padding: '0.75rem',
-      borderRadius: '4px',
-      border: '1px solid #ddd',
-      fontSize: '1rem',
-      transition: 'border-color 0.2s',
-      '&:focus': {
-        outline: 'none',
-        borderColor: '#007bff',
-      },
-    },
-    select: {
-      padding: '0.75rem',
-      borderRadius: '4px',
-      border: '1px solid #ddd',
-      fontSize: '1rem',
-      backgroundColor: '#fff',
-    },
-    error: {
-      color: '#dc3545',
-      fontSize: '0.8rem',
-      marginTop: '0.25rem',
-    },
-    button: {
-      padding: '0.75rem',
-      backgroundColor: '#007bff',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '4px',
-      fontSize: '1rem',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s',
-      '&:hover': {
-        backgroundColor: '#0056b3',
-      },
-      '&:disabled': {
-        backgroundColor: '#ccc',
-        cursor: 'not-allowed',
-      },
-    },
-    loginLink: {
-      textAlign: 'center',
-      marginTop: '1rem',
-      fontSize: '0.9rem',
-      color: '#666',
-    },
-  };
-
   if (isLoading) {
     return (
-      <div style={styles.container}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <Loader type="spinner" text="Creating your account..." />
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Create an Account</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.formGroup}>
-          <label htmlFor="name" style={styles.label}>Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            style={{
-              ...styles.input,
-              borderColor: errors.name ? '#dc3545' : '#ddd',
-            }}
-            placeholder="Enter your name"
-          />
-          {errors.name && <span style={styles.error}>{errors.name}</span>}
-        </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="transition-colors duration-200">
+      <div className={`max-w-md w-full space-y-8 p-10 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg z-10 transition-colors duration-200`}>
+        <h2 className={`mt-6 text-center text-3xl font-extrabold ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-200`}>
+          Create an Account
+        </h2>
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div>
+            <label htmlFor="name" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1 transition-colors duration-200`}>
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${errors.name ? 'border-red-500' : isDarkMode ? 'border-gray-600 placeholder-gray-500 text-white bg-gray-700' : 'border-gray-300 placeholder-gray-500 text-gray-900 bg-white'} focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'} focus:z-10 sm:text-sm transition-colors duration-200`}
+              placeholder="Enter your name"
+            />
+            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+          </div>
 
-        <div style={styles.formGroup}>
-          <label htmlFor="email" style={styles.label}>Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            style={{
-              ...styles.input,
-              borderColor: errors.email ? '#dc3545' : '#ddd',
-            }}
-            placeholder="Enter your email"
-          />
-          {errors.email && <span style={styles.error}>{errors.email}</span>}
-        </div>
+          <div>
+            <label htmlFor="email" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1 transition-colors duration-200`}>
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : isDarkMode ? 'border-gray-600 placeholder-gray-500 text-white bg-gray-700' : 'border-gray-300 placeholder-gray-500 text-gray-900 bg-white'} focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'} focus:z-10 sm:text-sm transition-colors duration-200`}
+              placeholder="Enter your email"
+            />
+            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+          </div>
 
-        <div style={styles.formGroup}>
-          <label htmlFor="password" style={styles.label}>Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            style={{
-              ...styles.input,
-              borderColor: errors.password ? '#dc3545' : '#ddd',
-            }}
-            placeholder="Enter your password"
-          />
-          {errors.password && <span style={styles.error}>{errors.password}</span>}
-        </div>
+          <div>
+            <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1 transition-colors duration-200`}>
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : isDarkMode ? 'border-gray-600 placeholder-gray-500 text-white bg-gray-700' : 'border-gray-300 placeholder-gray-500 text-gray-900 bg-white'} focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'} focus:z-10 sm:text-sm transition-colors duration-200`}
+              placeholder="Enter your password"
+            />
+            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+          </div>
 
-        <div style={styles.formGroup}>
-          <label htmlFor="confirmPassword" style={styles.label}>Confirm Password</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            style={{ 
-              ...styles.input,
-              borderColor: errors.confirmPassword ? '#dc3545' : '#ddd',
-            }}
-            placeholder="Confirm your password"
-          />
-          {errors.confirmPassword && (
-            <span style={styles.error}>{errors.confirmPassword}</span>
-          )}
-        </div>
+          <div>
+            <label htmlFor="confirmPassword" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1 transition-colors duration-200`}>
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : isDarkMode ? 'border-gray-600 placeholder-gray-500 text-white bg-gray-700' : 'border-gray-300 placeholder-gray-500 text-gray-900 bg-white'} focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'} focus:z-10 sm:text-sm transition-colors duration-200`}
+              placeholder="Confirm your password"
+            />
+            {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
+          </div>
 
-        <div style={styles.formGroup}>
-          <label htmlFor="role" style={styles.label}>Role</label>
-          <select
-            id="role"
-                    name="role"
-            value={formData.role}
-            onChange={handleChange}
-            style={styles.select}
+          <div>
+            <label htmlFor="role" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1 transition-colors duration-200`}>
+              Register as
+            </label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 placeholder-gray-500 text-white bg-gray-700' : 'border-gray-300 placeholder-gray-500 text-gray-900 bg-white'} focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'} focus:z-10 sm:text-sm transition-colors duration-200`}
+            >
+              <option value="user">User</option>
+              <option value="organizer">Organizer</option>
+            </select>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-full text-white ${isLoading ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'}`}
+            >
+              {isLoading ? 'Creating Account...' : 'Register'}
+            </button>
+          </div>
+        </form>
+
+        <div className={`text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-6 transition-colors duration-200`}>
+          Already have an account?{' '}
+          <button
+            onClick={() => {
+              closeModal();
+              openLoginModal();
+            }}
+            className={`font-medium ${isDarkMode ? 'text-blue-600 hover:text-blue-500' : 'text-blue-600 hover:text-blue-800'} transition-colors duration-200`}
           >
-            <option value="user">User</option>
-            <option value="organizer">Organizer</option>
-          </select>
+            Login here
+          </button>
         </div>
-
-        <button 
-          type="submit"
-          style={styles.button}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Creating Account...' : 'Register'}
-        </button>
-      </form>
-
-      <div style={styles.loginLink}>
-        Already have an account?{' '}
-        <Link to="/login" style={{ color: '#007bff', textDecoration: 'none' }}>
-          Login here
-        </Link>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
