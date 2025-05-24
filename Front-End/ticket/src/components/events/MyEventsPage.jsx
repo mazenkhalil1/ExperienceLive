@@ -70,12 +70,12 @@ const MyEventsPage = () => {
           >
             Analytics Dashboard
           </button>
-          <button
-            onClick={() => navigate('/organizer/events/new')}
+        <button
+          onClick={() => navigate('/organizer/events/new')}
             className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
-          >
-            Create New Event
-          </button>
+        >
+          Create New Event
+        </button>
         </div>
       </div>
 

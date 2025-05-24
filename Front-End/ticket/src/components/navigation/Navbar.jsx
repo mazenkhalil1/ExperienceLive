@@ -53,6 +53,14 @@ function Navbar() {
                     My Events
                   </Link>
                 )}
+                {(user?.role === 'user' || user?.role === 'admin') && (
+                  <Link
+                    to="/bookings"
+                    className="px-4 py-2 text-gray-700 hover:text-blue-600"
+                  >
+                    My Bookings
+                  </Link>
+                )}
                 <Link
                   to="/profile"
                   className="px-4 py-2 text-gray-700 hover:text-blue-600"
@@ -129,6 +137,14 @@ function Navbar() {
                     className="px-4 py-2 text-gray-700 hover:text-blue-600"
                   >
                     My Events
+                  </Link>
+                )}
+                {(user?.role === 'user' || user?.role === 'admin') && (
+                  <Link
+                    to="/bookings"
+                    className="px-4 py-2 text-gray-700 hover:text-blue-600"
+                  >
+                    My Bookings
                   </Link>
                 )}
                 <Link

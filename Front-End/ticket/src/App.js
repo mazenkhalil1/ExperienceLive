@@ -18,6 +18,8 @@ import MyEventsPage from './components/events/MyEventsPage';
 import EventForm from './components/events/EventForm';
 import EventAnalytics from './components/events/EventAnalytics';
 import AdminEventsPage from './components/events/AdminEventsPage';
+import UserBookingsPage from './components/bookings/UserBookingsPage';
+import BookingDetails from './components/bookings/BookingDetails';
 
 function App() {
   return (
@@ -85,6 +87,24 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['user', 'organizer']}>
                     <EventList userOnly={true} />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Booking routes */}
+              <Route 
+                path="/bookings" 
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <UserBookingsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/bookings/:id" 
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <BookingDetails />
                   </ProtectedRoute>
                 } 
               />

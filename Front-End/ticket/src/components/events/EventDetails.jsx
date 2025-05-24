@@ -4,6 +4,7 @@ import axiosInstance from '../../services/axiosConfig';
 import { showToast } from '../shared/Toast';
 import Loader from '../shared/Loader';
 import { useUser } from '../../context/UserContext';
+import BookTicketForm from '../bookings/BookTicketForm';
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const EventDetails = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showBookingForm, setShowBookingForm] = useState(false);
 
   useEffect(() => {
     fetchEventDetails();
@@ -32,6 +34,11 @@ const EventDetails = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBookingComplete = () => {
+    showToast.success('Booking completed successfully!');
+    navigate('/bookings');
   };
 
   if (loading) return <Loader />;
@@ -59,7 +66,7 @@ const EventDetails = () => {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-green-600 mb-2">
-                EGP {event.price}
+                ${event.price}
               </div>
               {event.remainingTickets > 0 ? (
                 <div className="text-sm text-gray-500">
@@ -108,28 +115,39 @@ const EventDetails = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="mt-8 flex justify-end gap-4">
+          {/* Booking Section */}
+          <div className="mt-8">
             {isAuthenticated ? (
-              <>
-                {event.remainingTickets > 0 && (
+              event.remainingTickets > 0 ? (
+                showBookingForm ? (
+                  <div className="max-w-md mx-auto">
+                    <BookTicketForm 
+                      event={event} 
+                      onBookingComplete={handleBookingComplete} 
+                    />
+                  </div>
+                ) : (
                   <button
-                    onClick={() => navigate(`/booking/${event._id}`)}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    onClick={() => setShowBookingForm(true)}
+                    className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Book Now
                   </button>
-                )}
-              </>
+                )
+              ) : (
+                <div className="text-center text-red-600 font-medium">
+                  This event is sold out
+                </div>
+              )
             ) : (
               <button
                 onClick={() => navigate('/login', { state: { from: `/events/${id}` } })}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Login to Book
               </button>
-          )}
-            </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
