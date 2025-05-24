@@ -86,7 +86,7 @@ const EventForm = () => {
   }, [id]);
 
   useEffect(() => {
-    fetchEventDetails();
+      fetchEventDetails();
   }, [fetchEventDetails]);
 
   const handleChange = (e) => {
@@ -192,20 +192,20 @@ const EventForm = () => {
           </button>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg shadow p-6">
-          <div>
+        <div>
             <label className="block text-gray-700 mb-2">Title *</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
               disabled={!!id}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 formErrors.title ? 'border-red-500' : 'border-gray-300'
@@ -215,34 +215,34 @@ const EventForm = () => {
             {formErrors.title && (
               <p className="mt-1 text-sm text-red-500">{formErrors.title}</p>
             )}
-          </div>
+        </div>
 
-          <div>
+        <div>
             <label className="block text-gray-700 mb-2">Description *</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
               disabled={!!id}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 formErrors.description ? 'border-red-500' : 'border-gray-300'
               } ${id ? 'bg-gray-100' : ''}`}
-              rows="4"
+            rows="4"
               placeholder="Enter event description"
-            />
+          />
             {formErrors.description && (
               <p className="mt-1 text-sm text-red-500">{formErrors.description}</p>
             )}
-          </div>
+        </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div>
               <label className="block text-gray-700 mb-2">Date *</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
                 min={new Date().toISOString().split('T')[0]}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   formErrors.date ? 'border-red-500' : 'border-gray-300'
@@ -251,31 +251,31 @@ const EventForm = () => {
               {formErrors.date && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.date}</p>
               )}
-            </div>
-            <div>
+          </div>
+          <div>
               <label className="block text-gray-700 mb-2">Time *</label>
-              <input
-                type="time"
-                name="time"
-                value={formData.time}
-                onChange={handleChange}
+            <input
+              type="time"
+              name="time"
+              value={formData.time}
+              onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   formErrors.time ? 'border-red-500' : 'border-gray-300'
                 }`}
-              />
+            />
               {formErrors.time && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.time}</p>
               )}
             </div>
           </div>
 
-          <div>
+        <div>
             <label className="block text-gray-700 mb-2">Location *</label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 formErrors.location ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -284,43 +284,43 @@ const EventForm = () => {
             {formErrors.location && (
               <p className="mt-1 text-sm text-red-500">{formErrors.location}</p>
             )}
-          </div>
+        </div>
 
-          <div>
+        <div>
             <label className="block text-gray-700 mb-2">Category *</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
               disabled={!!id}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 formErrors.category ? 'border-red-500' : 'border-gray-300'
               } ${id ? 'bg-gray-100' : ''}`}
-            >
-              <option value="">Select a category</option>
-              <option value="music">Music</option>
-              <option value="sports">Sports</option>
-              <option value="theater">Theater</option>
-              <option value="conference">Conference</option>
+          >
+            <option value="">Select a category</option>
+            <option value="music">Music</option>
+            <option value="sports">Sports</option>
+            <option value="theater">Theater</option>
+            <option value="conference">Conference</option>
               <option value="workshop">Workshop</option>
               <option value="exhibition">Exhibition</option>
-              <option value="other">Other</option>
-            </select>
+            <option value="other">Other</option>
+          </select>
             {formErrors.category && (
               <p className="mt-1 text-sm text-red-500">{formErrors.category}</p>
             )}
-          </div>
+        </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div>
               <label className="block text-gray-700 mb-2">Ticket Price ($) *</label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
+            <input
+              type="number"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
                 disabled={!!id}
-                min="0"
+              min="0"
                 step="0.01"
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   formErrors.price ? 'border-red-500' : 'border-gray-300'
@@ -330,33 +330,33 @@ const EventForm = () => {
               {formErrors.price && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.price}</p>
               )}
-            </div>
-            <div>
+          </div>
+          <div>
               <label className="block text-gray-700 mb-2">Total Tickets *</label>
-              <input
-                type="number"
-                name="totalTickets"
-                value={formData.totalTickets}
-                onChange={handleChange}
-                min="1"
+            <input
+              type="number"
+              name="totalTickets"
+              value={formData.totalTickets}
+              onChange={handleChange}
+              min="1"
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   formErrors.totalTickets ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter total available tickets"
-              />
+            />
               {formErrors.totalTickets && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.totalTickets}</p>
               )}
             </div>
           </div>
 
-          <div>
+        <div>
             <label className="block text-gray-700 mb-2">Image URL *</label>
-            <input
-              type="url"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
+          <input
+            type="url"
+            name="image"
+            value={formData.image}
+            onChange={handleChange}
               disabled={!!id}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 formErrors.image ? 'border-red-500' : 'border-gray-300'
@@ -373,8 +373,8 @@ const EventForm = () => {
                   alt="Event preview"
                   className="w-full h-48 object-cover rounded-lg"
                   onError={() => setImagePreview('')}
-                />
-              </div>
+          />
+        </div>
             )}
           </div>
 
@@ -386,16 +386,16 @@ const EventForm = () => {
             >
               Cancel
             </button>
-            <button
-              type="submit"
+        <button
+          type="submit"
               disabled={submitting}
               className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors
                 ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {submitting ? 'Saving...' : id ? 'Update Event' : 'Create Event'}
-            </button>
+        </button>
           </div>
-        </form>
+      </form>
       </div>
     </div>
   );
