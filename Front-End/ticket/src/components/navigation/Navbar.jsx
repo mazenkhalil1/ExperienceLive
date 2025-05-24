@@ -53,7 +53,8 @@ function Navbar() {
                     My Events
                   </Link>
                 )}
-                {(user?.role === 'user' || user?.role === 'admin') && (
+                {/* Desktop Menu - Change this condition */}
+                {user?.role === 'user' && (
                   <Link
                     to="/bookings"
                     className="px-4 py-2 text-gray-700 hover:text-blue-600"
@@ -139,7 +140,8 @@ function Navbar() {
                     My Events
                   </Link>
                 )}
-                {(user?.role === 'user' || user?.role === 'admin') && (
+                {/* Mobile Menu - Change this condition */}
+                {user?.role === 'user' && (
                   <Link
                     to="/bookings"
                     className="px-4 py-2 text-gray-700 hover:text-blue-600"
@@ -183,4 +185,4 @@ function Navbar() {
   );
 }
 
-export default Navbar; 
+export default Navbar;
