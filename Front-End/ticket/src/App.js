@@ -83,7 +83,7 @@ function ThemedApp() {
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black' : 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-50 via-white to-white'} transition-colors duration-200`}>
       <Navbar openLoginModal={openLoginModal} openRegisterModal={openRegisterModal} locations={locations} categories={categories} />
       <main className="flex-1 py-6 px-4 sm:px-6 lg:px-8 mt-16">
-        <AnimatePresence exitBeforeEnter initial={false}>
+        <AnimatePresence mode='wait' initial={false}>
           <Routes location={location} key={location.pathname}>
             {/* Public routes */}
             <Route path="/" element={<EventList events={events} />} />
