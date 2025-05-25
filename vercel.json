@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/backend" }
+  ],
+  "build": {
+    "env": {
+      "NIXPACKS_APP_DIR": "Front-End/ticket"
+    }
+  }
+} 
