@@ -74,17 +74,28 @@ function ThemedApp() {
 
             {/* Admin routes */}
             <Route 
-              path={ROUTES.ADMIN.ROOT} 
+              path={ROUTES.ADMIN.DASHBOARD}
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
-                  <Routes>
-                    <Route path="dashboard" element={<AdminUsersPage />} />
-                    <Route path="users" element={<AdminUsersPage />} />
-                    <Route path="events" element={<AdminEventsPage />} />
-                    <Route path="*" element={<Navigate to={ROUTES.ADMIN.DASHBOARD} replace />} />
-                  </Routes>
+                  <AdminUsersPage />
                 </ProtectedRoute>
-              } 
+              }
+            />
+            <Route 
+              path={ROUTES.ADMIN.USERS}
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path={ROUTES.ADMIN.EVENTS}
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminEventsPage />
+                </ProtectedRoute>
+              }
             />
             
             {/* Organizer routes */}
