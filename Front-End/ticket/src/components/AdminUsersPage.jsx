@@ -3,6 +3,8 @@ import { toast } from 'react-toastify';
 import UserRow from './UserRow';
 import axiosInstance from '../services/axiosConfig';
 import 'react-toastify/dist/ReactToastify.css';
+import { motion, AnimatePresence } from 'framer-motion';
+import Loader from './shared/Loader';
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -31,81 +33,100 @@ const AdminUsersPage = () => {
 
   const handleUserUpdate = async (userId, newRole) => {
     try {
-      console.log('Frontend: Attempting to update user with ID:', userId);
+      // Optimistically update the UI
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user._id === userId ? { ...user, role: newRole, isUpdating: true } : user
+        )
+      );
+
       await axiosInstance.put(`/users/${userId}`, { role: newRole });
       toast.success('User role updated successfully');
-      fetchUsers(); // Refresh the users list
+      // Fetch users to get the latest data and remove optimistic state
+      fetchUsers(); 
     } catch (err) {
       console.error('Error updating user:', err);
       const errorMessage = err.response?.data?.message || 'Failed to update user role';
       setError(errorMessage);
       toast.error(errorMessage);
+      // Revert optimistic update if failed
+      fetchUsers();
     }
   };
 
   const handleUserDelete = async (userId) => {
     try {
-      console.log('Frontend: Attempting to delete user with ID:', userId);
+       // Optimistically remove the user from the UI
+      setUsers(prevUsers => prevUsers.map(user => 
+         user._id === userId ? { ...user, isDeleting: true } : user
+      ));
+
       await axiosInstance.delete(`/users/${userId}`);
       toast.success('User deleted successfully');
-      fetchUsers(); // Refresh the users list
+      // Filter out the deleted user
+      setUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
     } catch (err) {
       console.error('Error deleting user:', err);
       const errorMessage = err.response?.data?.message || 'Failed to delete user';
       toast.error(errorMessage);
+      // Refresh to revert optimistic removal if failed
+      fetchUsers();
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <div className="container mx-auto px-4 py-8 min-h-screen-except-nav-footer flex items-center justify-center">
+        <Loader type="spinner" size="large" text="Loading users..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-red-500">{error}</div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="p-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg shadow-md">
+          {error}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">User Management</h1>
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <UserRow
-                key={user._id}
-                user={user}
-                onUpdateRole={handleUserUpdate}
-                onDelete={handleUserDelete}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="container mx-auto px-4 py-8"
+    >
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">User Management</h1>
+      
+      <motion.div
+         initial={{ y: 20, opacity: 0 }}
+         animate={{ y: 0, opacity: 1 }}
+         transition={{ delay: 0.2 }}
+         className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6"
+      >
+         {users.length === 0 ? (
+            <div className="text-center text-gray-600 dark:text-gray-400 py-8">
+               No users found.
+            </div>
+         ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AnimatePresence>
+                 {users.map((user) => (
+                    <UserRow
+                      key={user._id}
+                      user={user}
+                      onUpdateRole={handleUserUpdate}
+                      onDelete={handleUserDelete}
+                    />
+                 ))}
+              </AnimatePresence>
+            </div>
+         )}
+
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,100 +1,22 @@
 import React, { useState } from 'react';
 import { useUser } from '../../context/UserContext';
+import { useTheme } from '../../context/ThemeContext';
 import Loader from '../shared/Loader';
 import { showToast } from '../shared/Toast';
 import UpdateProfileForm from './UpdateProfileForm';
+import { motion } from 'framer-motion';
 
 const ProfilePage = () => {
   const { user, loading, error } = useUser();
+  const { isDarkMode } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
 
-  const styles = {
-    container: {
-      padding: '20px',
-      maxWidth: '600px',
-      margin: '0 auto'
-    },
-    card: {
-      border: '1px solid #ccc',
-      padding: '20px',
-      borderRadius: '8px',
-      backgroundColor: 'white',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    },
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '20px',
-      paddingBottom: '10px',
-      borderBottom: '1px solid #eee'
-    },
-    heading: {
-      margin: 0,
-      color: '#333',
-      fontSize: '1.5rem'
-    },
-    editButton: {
-      padding: '8px 16px',
-      backgroundColor: '#007bff',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s',
-      '&:hover': {
-        backgroundColor: '#0056b3'
-      }
-    },
-    infoGroup: {
-      marginBottom: '15px',
-      padding: '10px',
-      borderBottom: '1px solid #eee',
-      display: 'flex',
-      alignItems: 'center'
-    },
-    label: {
-      fontWeight: 'bold',
-      marginRight: '10px',
-      color: '#666',
-      width: '120px'
-    },
-    value: {
-      flex: 1
-    },
-    profilePicture: {
-      width: '100px',
-      height: '100px',
-      borderRadius: '50%',
-      objectFit: 'cover',
-      marginBottom: '20px',
-      border: '3px solid #fff',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    },
-    roleTag: {
-      display: 'inline-block',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontSize: '0.875rem',
-      fontWeight: '500',
-      textTransform: 'capitalize'
-    }
-  };
-
-  const getRoleStyle = (role) => {
-    switch (role) {
-      case 'admin':
-        return { backgroundColor: '#dc3545', color: 'white' };
-      case 'organizer':
-        return { backgroundColor: '#28a745', color: 'white' };
-      default:
-        return { backgroundColor: '#007bff', color: 'white' };
-    }
-  };
+  // Format date of birth if it exists
+  const formattedBirthdate = user?.birthdate ? new Date(user.birthdate).toLocaleDateString() : 'N/A';
 
   if (loading) {
     return (
-      <div style={styles.container}>
+      <div className="flex justify-center items-center min-h-screen-except-nav-footer pt-16 px-4">
         <Loader type="spinner" size="large" text="Loading profile..." />
       </div>
     );
@@ -103,8 +25,8 @@ const ProfilePage = () => {
   if (error) {
     showToast.error(error);
     return (
-      <div style={styles.container}>
-        <div style={{ color: '#dc3545', textAlign: 'center' }}>
+      <div className="flex justify-center items-center min-h-screen-except-nav-footer pt-16 px-4">
+        <div className="text-red-500 dark:text-red-400 text-center">
           Error loading profile. Please try again later.
         </div>
       </div>
@@ -113,8 +35,8 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <div style={styles.container}>
-        <div style={{ textAlign: 'center', color: '#666' }}>
+      <div className="flex justify-center items-center min-h-screen-except-nav-footer pt-16 px-4">
+        <div className="text-center text-gray-600 dark:text-gray-400">
           No profile data available
         </div>
       </div>
@@ -127,62 +49,84 @@ const ProfilePage = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.heading}>Profile Information</h1>
-          <button
-            style={styles.editButton}
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? 'Cancel' : 'Edit Profile'}
-          </button>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex justify-center py-8 px-4"
+    >
+      <div className="max-w-4xl w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8 space-y-8">
+
+        {/* Profile Info Section */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-6 sm:space-y-0 sm:space-x-8">
+          {/* Profile Picture Placeholder/Image */}
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {user.profilePicture ? (
+              <img 
+                src={user.profilePicture}
+                alt={`${user.name}'s profile`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <svg className="w-20 h-20 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+              </svg>
+            )}
+          </div>
+
+          {/* Name, Member Since, Edit Button */}
+          <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-1 font-serif">{user.name}</h1>
+            <p className="text-gray-600 dark:text-gray-400 text-base md:text-lg">Member Since {new Date(user.createdAt).getFullYear()}</p>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="mt-4 px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+            >
+              {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+            </button>
+          </div>
         </div>
 
         {isEditing ? (
           <UpdateProfileForm onUpdateSuccess={handleUpdateSuccess} />
         ) : (
-          <>
-            {user.profilePicture && (
-              <img
-                src={user.profilePicture}
-                alt={`${user.name}'s profile`}
-                style={styles.profilePicture}
-              />
-            )}
-            
-            <div style={styles.infoGroup}>
-              <span style={styles.label}>Name:</span>
-              <span style={styles.value}>{user.name}</span>
-            </div>
-            
-            <div style={styles.infoGroup}>
-              <span style={styles.label}>Email:</span>
-              <span style={styles.value}>{user.email}</span>
-            </div>
-            
-            <div style={styles.infoGroup}>
-              <span style={styles.label}>Role:</span>
-              <span 
-                style={{
-                  ...styles.roleTag,
-                  ...getRoleStyle(user.role)
-                }}
-              >
-                {user.role}
-              </span>
-            </div>
-            
-            <div style={styles.infoGroup}>
-              <span style={styles.label}>Member Since:</span>
-              <span style={styles.value}>
-                {new Date(user.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-          </>
+          <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             transition={{ delay: 0.2, duration: 0.5 }}
+             className="space-y-6"
+          >
+             {/* Contact Information */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="flex items-center text-gray-700 dark:text-gray-300">
+                     <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 10a4 4 0 01-1.382 3.09l-3.62 3.62a1 1 0 001.414 1.414l3.62-3.62A6 6 0 0021 12h-4a2 2 0 00-2 2v1z"></path></svg>
+                     <span>{user.phone || 'N/A'}</span>
+                 </div>
+                 <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>{formattedBirthdate}</span>
+                 </div>
+                 <div className="flex items-center text-gray-700 dark:text-gray-300">
+                     <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 0a5 5 0 11-7.072 0m7.072 0L5.636 18.364m0 0a5 5 0 110-7.072m0 7.072L18.364 5.636m0 0a5 5 0 107.072 7.072M18.364 5.636A5 5 0 1011.292 12.708M12.708 11.292a5 5 0 10-7.072 7.072M18.364 5.636L5.636 18.364"></path>
+                     </svg>
+                    <span className="capitalize">{user.role || 'N/A'}</span>
+                 </div>
+                 {user.location && (
+                    <div className="flex items-center text-gray-700 dark:text-gray-300">
+                       <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                       <span>{user.location || 'N/A'}</span>
+                    </div>
+                  )}
+                 <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-1 9l-4.343-4.343m0 0L9.657 17.657m0 0l-4.343 4.343m0 0A9 9 0 1020 11a9 9 0 00-11.468 5.16m0 0L7 19m4 4v-4m-3 0H9m10 0h2"></path></svg>
+                    <span>{user.email || 'N/A'}</span>
+                 </div>
+              </div>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

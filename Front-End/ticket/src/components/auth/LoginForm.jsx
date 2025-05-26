@@ -1,163 +1,139 @@
-import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
-import { showToast } from '../shared/Toast';
 import axiosInstance from '../../services/axiosConfig';
+import { toast } from 'react-toastify';
+import { useTheme } from '../../context/ThemeContext';
+import { motion } from 'framer-motion';
 
-function LoginForm() {
+function LoginForm({ openRegisterModal }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
+  const { login } = useUser();
+  const { isDarkMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useUser();
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    // Email validation
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
+  // Add effect to handle Escape key press
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        navigate(-1); // Navigate back on Escape key press
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [navigate]); // Add navigate to dependencies
+
+  // Read email from location state and pre-fill if available
+  useEffect(() => {
+    if (location.state?.email) {
+      setEmail(location.state.email);
     }
-
-    // Password validation
-    if (!password) {
-      newErrors.password = 'Password is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  }, [location.state?.email]); // Add location.state?.email to dependencies
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      showToast.error('Please fix the errors in the form');
-      return;
-    }
-
     setIsLoading(true);
+    setError(null);
     try {
-      // Make login request with exact parameters expected by backend
-      const res = await axiosInstance.post('/login', {
-        email,
-        password
-      });
+      // Perform the login authentication
+      console.log('Attempting login...');
+      const response = await axiosInstance.post('/login', { email, password });
 
-      // Verify response structure matches backend
-      if (!res.data.success || !res.data.token || !res.data.user) {
-        throw new Error('Invalid response format from server');
-      }
+      console.log('Login successful:', response.data);
+      // Extract user data from the response
+      const userData = response.data.user; // Assuming user data is in response.data.user
+      const token = response.data.token; // Assuming token is in response.data.token
 
-      // Store token
-      localStorage.setItem('token', res.data.token);
+      // Pass the complete user data and token to the login function from UserContext
+      login(userData, token);
 
-      // Process user data ensuring all required fields are present
-      const userData = {
-        id: res.data.user.id,
-        name: res.data.user.name,
-        email: res.data.user.email,
-        role: res.data.user.role || 'user'
-      };
+      // Clear any previous errors on success
+      setError(null);
 
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('userRole', userData.role);
-
-      // Update context
-      login(userData);
-      showToast.success('Login successful!');
+      toast.success('Login successful!');
       
-      // Always redirect to the landing page (EventList)
-      navigate('/', { replace: true });
+      // Redirect to the page the user was trying to access, or to the home page
+      const from = location.state?.from || '/';
+      navigate(from);
+
     } catch (err) {
-      console.error('Login error:', err);
-      if (err.response?.status === 400) {
-        // Handle validation errors from backend
-        setErrors({
-          email: err.response.data.message,
-          password: err.response.data.message
-        });
-      }
-      showToast.error(err.response?.data?.message || 'Login failed. Please try again.');
+      console.error('Login failed:', err);
+      setError(err.response?.data?.message || 'Failed to login');
+      toast.error(err.response?.data?.message || 'Failed to login');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Login</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 flex items-center justify-center z-50"
+    >
+      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+      <div className={`relative max-w-md w-full mx-4 p-8 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl z-10`}>
+        <h2 className={`text-2xl font-bold mb-6 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Login</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
             <input
               type="email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
-              }}
+              onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={isLoading}
-              className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-              placeholder="Enter your email"
+              className={`mt-1 block w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg shadow-sm focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'} transition-colors duration-200`}
             />
-            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Password</label>
             <input
               type="password"
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-              }}
+              onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={isLoading}
-              className={`w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-              placeholder="Enter your password"
+              className={`mt-1 block w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-black'} rounded-lg shadow-sm focus:outline-none ${isDarkMode ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-yellow-500 focus:border-yellow-500'} transition-colors duration-200`}
             />
-            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
           </div>
-          <button 
-            type="submit"
-            disabled={isLoading}
-            className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-              isLoading 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700 transition-colors'
-            }`}
-          >
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-        
-        <div className="mt-4 text-center space-y-2">
-          <Link 
-            to="/forget-password" 
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Forgot Password?
-          </Link>
-          <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link 
-              to="/register" 
-              className="text-blue-600 hover:text-blue-800"
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200`}
             >
-              Register here
+              {isLoading ? 'Logging in...' : 'Login'}
+            </button>
+          </div>
+          <div className="text-center">
+            <Link 
+              to="/register"
+              className={`text-sm ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} transition-colors duration-200`}
+            >
+              Don't have an account? Register
             </Link>
-          </p>
-        </div>
+          </div>
+          <div className="text-center">
+            <Link 
+              to="/forget-password" 
+              className={`text-sm ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'} transition-colors duration-200`}
+            >
+              Forgot Password?
+            </Link>
+          </div>
+        </form>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

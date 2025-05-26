@@ -1,120 +1,166 @@
 import './App.css';
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
-import ForgetPasswordForm from './components/auth/ForgetPasswordForm';
-import ProfilePage from './components/profile/ProfilePage';
-import EventDetails from './components/events/EventDetails';
-import EventList from './components/events/EventList';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { SearchFilterProvider } from './context/SearchFilterContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { ROUTES } from './constants/routes';
+
+// Layout Components
 import Navbar from './components/navigation/Navbar';
 import Footer from './components/shared/Footer';
-import Toast from './components/shared/Toast';
 import Loader from './components/shared/Loader';
-import AdminUsersPage from './components/AdminUsersPage';
-import MyEventsPage from './components/events/MyEventsPage';
-import EventForm from './components/events/EventForm';
-import EventAnalytics from './components/events/EventAnalytics';
-import AdminEventsPage from './components/events/AdminEventsPage';
-import UserBookingsPage from './components/bookings/UserBookingsPage';
-import BookingDetails from './components/bookings/BookingDetails';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
+// Lazy-loaded components
+const LoginForm = lazy(() => import('./components/auth/LoginForm'));
+const RegisterForm = lazy(() => import('./components/auth/RegisterForm'));
+const ForgetPasswordForm = lazy(() => import('./components/auth/ForgetPasswordForm'));
+const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
+const EventDetails = lazy(() => import('./components/events/EventDetails'));
+const EventList = lazy(() => import('./components/events/EventList'));
+const AdminUsersPage = lazy(() => import('./components/AdminUsersPage'));
+const MyEventsPage = lazy(() => import('./components/events/MyEventsPage'));
+const EventForm = lazy(() => import('./components/events/EventForm'));
+const EventAnalytics = lazy(() => import('./components/events/EventAnalytics'));
+const AdminEventsPage = lazy(() => import('./components/events/AdminEventsPage'));
+const UserBookingsPage = lazy(() => import('./components/bookings/UserBookingsPage'));
+const BookingDetails = lazy(() => import('./components/bookings/BookingDetails'));
+const UnauthorizedPage = lazy(() => import('./components/shared/UnauthorizedPage'));
+const NotFoundPage = lazy(() => import('./components/shared/NotFoundPage'));
 
 function App() {
   return (
     <Router>
-      <UserProvider>
-        <div style={{ 
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <Navbar />
-          <main style={{ flex: 1, padding: '20px 0' }}>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<EventList />} />
-              <Route path="/login" element={<LoginForm />} />
-              <Route path="/register" element={<RegisterForm />} />
-              <Route path="/forget-password" element={<ForgetPasswordForm />} />
-              <Route path="/events/:id" element={<EventDetails />} />
-
-              {/* Protected profile route - accessible by all authenticated users */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute allowedRoles={['admin', 'organizer', 'user']}>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Admin routes */}
-              <Route 
-                path="/admin/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <Routes>
-                      <Route path="dashboard" element={<AdminUsersPage />} />
-                      <Route path="users" element={<AdminUsersPage />} />
-                      <Route path="events" element={<AdminEventsPage />} />
-                      <Route path="*" element={<Navigate to="dashboard" replace />} />
-                    </Routes>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Organizer routes */}
-              <Route 
-                path="/organizer/*" 
-                element={
-                  <ProtectedRoute allowedRoles={['organizer']}>
-                    <Routes>
-                      <Route path="events" element={<MyEventsPage />} />
-                      <Route path="events/new" element={<EventForm />} />
-                      <Route path="events/edit/:id" element={<EventForm />} />
-                      <Route path="analytics" element={<EventAnalytics />} />
-                      <Route path="*" element={<Navigate to="events" replace />} />
-                    </Routes>
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Protected User routes */}
-              <Route 
-                path="/my-events" 
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'organizer']}>
-                    <EventList userOnly={true} />
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Booking routes */}
-              <Route 
-                path="/bookings" 
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'admin']}>
-                    <UserBookingsPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/bookings/:id" 
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'admin']}>
-                    <BookingDetails />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </main>
-          <Footer />
-          <Toast />
-        </div>
-      </UserProvider>
+      <ThemeProvider>
+        <UserProvider>
+          <SearchFilterProvider>
+            <ThemedApp />
+          </SearchFilterProvider>
+        </UserProvider>
+      </ThemeProvider>
     </Router>
+  );
+}
+
+function ThemedApp() {
+  const { isDarkMode } = useTheme();
+
+  return (
+    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black' : 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-50 via-white to-white'} transition-colors duration-200`}>
+      <Navbar />
+      <main className="flex-1 py-6 px-4 sm:px-6 lg:px-8 mt-16">
+        <Suspense fallback={<Loader size="lg" />}>
+          <Routes>
+            {/* Public routes */}
+            <Route path={ROUTES.HOME} element={<EventList />} />
+            <Route path={ROUTES.LOGIN} element={<LoginForm />} />
+            <Route path={ROUTES.REGISTER} element={<RegisterForm />} />
+            <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgetPasswordForm />} />
+            <Route path={ROUTES.EVENT_DETAILS} element={<EventDetails />} />
+            <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
+
+            {/* Protected profile route */}
+            <Route 
+              path={ROUTES.PROFILE} 
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'organizer', 'user']}>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Admin routes */}
+            <Route 
+              path={ROUTES.ADMIN.DASHBOARD}
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path={ROUTES.ADMIN.USERS}
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path={ROUTES.ADMIN.EVENTS}
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminEventsPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Organizer routes */}
+            <Route 
+              path={`${ROUTES.ORGANIZER.ROOT}/*`}
+              element={
+                <ProtectedRoute allowedRoles={['organizer']}>
+                  <Routes>
+                    <Route path="events" element={<MyEventsPage />} />
+                    <Route path="events/new" element={<EventForm />} />
+                    <Route path="events/edit/:id" element={<EventForm />} />
+                    <Route path="analytics" element={<EventAnalytics />} />
+                    <Route path="*" element={<Navigate to={ROUTES.ORGANIZER.EVENTS} replace />} />
+                  </Routes>
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Protected User routes */}
+            <Route 
+              path={ROUTES.MY_EVENTS} 
+              element={
+                <ProtectedRoute allowedRoles={['user', 'organizer']}>
+                  <EventList userOnly={true} />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Booking routes */}
+            <Route 
+              path={ROUTES.BOOKINGS} 
+              element={
+                <ProtectedRoute allowedRoles={['user', 'admin']}>
+                  <UserBookingsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path={ROUTES.BOOKING_DETAILS} 
+              element={
+                <ProtectedRoute allowedRoles={['user', 'admin']}>
+                  <BookingDetails />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Catch-all route for 404 */}
+            <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </main>
+      <Footer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+    </div>
   );
 }
 
