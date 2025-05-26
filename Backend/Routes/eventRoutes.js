@@ -16,6 +16,9 @@ router.get("/", eventController.getEvents);
 // Admin routes - must be before /:id to prevent conflict
 router.get("/all", authMiddleware, authorize(["admin"]), eventController.getAllEvents);
 
+// === Analytics route (must be before /:id) ===
+router.get("/analytics", authMiddleware, authorize(["organizer", "admin"]), eventController.getAnalytics);
+
 // Event detail route
 router.get("/:id", eventController.getEvent);
 

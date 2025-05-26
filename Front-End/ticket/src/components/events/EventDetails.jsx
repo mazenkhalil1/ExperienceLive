@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axiosInstance from '../../services/axiosConfig';
 import { showToast } from '../shared/Toast';
@@ -12,16 +12,12 @@ import { ROUTES } from '../../constants/routes';
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useUser();
+  const { isAuthenticated } = useUser();
   const { isDarkMode } = useTheme();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
-
-  useEffect(() => {
-    fetchEventDetails();
-  }, [id]);
 
   const fetchEventDetails = async () => {
     try {
@@ -39,6 +35,10 @@ const EventDetails = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEventDetails();
+  }, [id, fetchEventDetails]);
 
   const handleBookingComplete = () => {
     showToast.success('Booking completed successfully!');

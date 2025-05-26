@@ -288,3 +288,64 @@ exports.updateEventStatus = async (req, res, next) => {
     next(err);
   }
 };
+
+// Event Analytics for Organizer/Admin
+exports.getAnalytics = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const userRole = req.user.role;
+    let eventFilter = {};
+    if (userRole === 'organizer') {
+      eventFilter.organizer = userId;
+    }
+
+    // Get all events for this organizer/admin
+    const events = await Event.find(eventFilter);
+    const eventIds = events.map(e => e._id);
+
+    // Bookings by Event
+    const bookingsByEvent = await Booking.aggregate([
+      { $match: { event: { $in: eventIds } } },
+      { $group: { _id: "$event", bookings: { $sum: 1 } } },
+      { $lookup: { from: "events", localField: "_id", foreignField: "_id", as: "event" } },
+      { $unwind: "$event" },
+      { $project: { name: "$event.title", bookings: 1 } }
+    ]);
+
+    // Revenue by Event
+    const revenueByEvent = await Booking.aggregate([
+      { $match: { event: { $in: eventIds } } },
+      { $group: { _id: "$event", revenue: { $sum: "$totalPrice" } } },
+      { $lookup: { from: "events", localField: "_id", foreignField: "_id", as: "event" } },
+      { $unwind: "$event" },
+      { $project: { name: "$event.title", revenue: 1 } }
+    ]);
+
+    // Bookings by Date
+    const bookingsByDate = await Booking.aggregate([
+      { $match: { event: { $in: eventIds } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, bookings: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+      { $project: { date: "$_id", bookings: 1, _id: 0 } }
+    ]);
+
+    // Ticket Type Distribution (if you have ticketType field)
+    const ticketTypeDistribution = await Booking.aggregate([
+      { $match: { event: { $in: eventIds } } },
+      { $group: { _id: "$ticketType", value: { $sum: 1 } } },
+      { $project: { name: "$_id", value: 1, _id: 0 } }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        bookingsByEvent,
+        revenueByEvent,
+        bookingsByDate,
+        ticketTypeDistribution
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};

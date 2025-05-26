@@ -382,55 +382,73 @@ const EventForm = () => {
             </div>
           </div>
 
-        <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Event Image {id ? '' : <span className="text-red-500">*</span>}</label>
-            {!id ? (
-              <div>
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleChange}
-                  className={`w-full text-sm text-gray-500 dark:text-gray-400
-                             file:mr-4 file:py-2 file:px-4
-                             file:rounded-full file:border-0
-                             file:text-sm file:font-semibold
-                             file:bg-blue-50 file:text-blue-700
-                             hover:file:bg-blue-100
-                             dark:file:bg-gray-700 dark:file:text-gray-300 dark:hover:file:bg-gray-600
-                             ${formErrors.image ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                />
-                {formErrors.image && (
-                  <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.image}</p>
-                )}
-              </div>
-            ) : (
-              <div>
-                {formData.imageUrl && (
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Event Image
+          </label>
+          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg">
+            <div className="space-y-1 text-center">
+              {imagePreview ? (
+                <div className="relative">
                   <img
-                    src={formData.imageUrl}
-                    alt="Event Preview"
-                    className="mt-2 w-48 h-32 object-cover rounded-lg shadow"
+                    src={imagePreview}
+                    alt="Event preview"
+                    className="mx-auto h-64 w-auto object-cover rounded-lg"
                   />
-                )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImagePreview('');
+                      setFormData(prev => ({ ...prev, image: null, imageUrl: '' }));
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+              <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                <label
+                  htmlFor="image"
+                  className="relative cursor-pointer bg-white dark:bg-gray-700 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                >
+                  <span>Upload a file</span>
+                  <input
+                    id="image"
+                    name="image"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleChange}
+                  />
+                </label>
+                <p className="pl-1">or drag and drop</p>
               </div>
-            )}
-            
-            {imagePreview && !id && (
-               <img
-                  src={imagePreview}
-                  alt="Image Preview"
-                  className="mt-2 w-48 h-32 object-cover rounded-lg shadow"
-                />
-            )}
-             {imagePreview && id && formData.image && (
-               <img
-                  src={imagePreview}
-                  alt="Image Preview"
-                  className="mt-2 w-48 h-32 object-cover rounded-lg shadow"
-                />
-            )}
-
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                PNG, JPG, GIF up to 10MB
+              </p>
+            </div>
+          </div>
+          {formErrors.image && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{formErrors.image}</p>
+          )}
         </div>
 
         <div className="mt-6">
