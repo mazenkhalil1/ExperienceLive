@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axiosInstance from '../../services/axiosConfig';
 import { showToast } from '../shared/Toast';
@@ -7,8 +7,9 @@ import Loader from '../shared/Loader';
 import { useUser } from '../../context/UserContext';
 import BookTicketForm from '../bookings/BookTicketForm';
 import { useTheme } from '../../context/ThemeContext';
+import { ROUTES } from '../../constants/routes';
 
-const EventDetails = ({ openLoginModal }) => {
+const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useUser();
@@ -41,18 +42,20 @@ const EventDetails = ({ openLoginModal }) => {
 
   const handleBookingComplete = () => {
     showToast.success('Booking completed successfully!');
-    navigate('/bookings');
+    navigate(ROUTES.BOOKINGS);
   };
 
-  // Function to handle clicking a 'Buy Now' button for a specific ticket type
   const handleBuyNowClick = (ticketTypeId) => {
     if (isAuthenticated) {
-      // Navigate to booking page or open a modal/form for this ticket type
-      // For now, let's navigate to a placeholder booking page with ticket type id
-      navigate(`/book-ticket/${id}/${ticketTypeId}`);
+      setShowBookingForm(true);
     } else {
       showToast.info('Please login to book tickets.');
-      navigate('/login', { state: { from: `/events/${id}` } });
+      navigate(ROUTES.LOGIN, { 
+        state: { 
+          from: `/events/${id}`,
+          message: 'Please login to book tickets for this event.'
+        } 
+      });
     }
   };
 
@@ -240,68 +243,67 @@ const EventDetails = ({ openLoginModal }) => {
             </motion.div>
          )}
 
-        {/* Keeping the old booking form toggle logic commented out for now */}
-        
-        <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8"
-          >
-            {isAuthenticated ? (
-              event.remainingTickets > 0 ? (
-                <AnimatePresence mode="wait">
-                  {showBookingForm ? (
-                    <motion.div
-                      key="form"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="max-w-md mx-auto"
-                    >
-                      <BookTicketForm 
-                        event={event} 
-                        onBookingComplete={handleBookingComplete} 
-                      />
-                    </motion.div>
-                  ) : (
-                    <motion.button
-                      key="button"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      onClick={() => setShowBookingForm(true)}
-                      className="w-full md:w-auto px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200 shadow-lg hover:shadow-xl"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Book Now
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center text-red-600 dark:text-red-400 font-medium"
-                >
-                  This event is sold out
-                </motion.div>
-              )
-            ) : (
+        {/* Booking Section */}
+        <div className="md:col-span-3 flex flex-col items-center space-y-4 mt-4">
+          {!isAuthenticated ? (
+            <div className="text-center space-y-4">
+              <p className="text-gray-600 dark:text-gray-300">
+                Please login or register to book tickets for this event.
+              </p>
               <motion.button
-                onClick={openLoginModal}
-                className="w-full md:w-auto px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200 shadow-lg hover:shadow-xl"
+                onClick={() => {
+                  navigate(ROUTES.LOGIN, { 
+                    state: { from: `/events/${id}` }
+                  });
+                }}
+                className={`px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition-colors duration-200 ${isDarkMode ? 'dark:bg-blue-500 dark:hover:bg-blue-600' : ''}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 Login to Book
               </motion.button>
-            )}
-          </motion.div>
-        
+            </div>
+          ) : (
+            <motion.button
+              onClick={() => setShowBookingForm(true)}
+              className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-lg hover:bg-yellow-600 transition-colors duration-200"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Book Now
+            </motion.button>
+          )}
+        </div>
 
       </div>
+
+      {/* Booking Form Modal */}
+      <AnimatePresence>
+        {showBookingForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowBookingForm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <BookTicketForm 
+                event={event}
+                onComplete={handleBookingComplete}
+                onCancel={() => setShowBookingForm(false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

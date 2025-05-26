@@ -131,8 +131,9 @@ const EventForm = () => {
     }
 
     setSubmitting(true);
+    setError(null); // Clear previous server errors
     
-    const data = new FormData();
+    const data = new FormData(); // Use FormData again
     // Append fields to FormData
     data.append('title', formData.title);
     data.append('description', formData.description);
@@ -142,34 +143,65 @@ const EventForm = () => {
     data.append('price', parseFloat(formData.price));
     data.append('totalTickets', parseInt(formData.totalTickets));
 
-    // Append image file if a new file is selected
-    if (formData.image) {
-      data.append('image', formData.image);
+    // Handle image upload as base64 string asynchronously
+    if (formData.image instanceof File) {
+      try {
+        const base64Image = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(formData.image);
+        });
+        data.append('image', base64Image); // Append base64 string to FormData
+      } catch (error) {
+        console.error('Error reading file:', error);
+        showToast.error('Failed to read image file.');
+        setSubmitting(false);
+        return; // Stop submission if file reading fails
+      }
     } else if (id && formData.imageUrl) {
-      // If editing and no new file selected, send existing image URL (backend should handle this)
+      // If editing and no new file selected, send existing image URL
       data.append('imageUrl', formData.imageUrl);
+    } else if (!id && !formData.image) {
+      // If creating and no image selected (and image is required by frontend validation)
+       showToast.error('Image is required.');
+       setSubmitting(false);
+       return;
     }
 
-    try {
-      const url = id ? `/events/${id}` : '/events';
-      const method = id ? 'put' : 'post';
+    // Determine URL and method
+    const url = id ? `/events/${id}` : '/events';
+    const method = id ? 'put' : 'post';
 
-      // axios automatically sets Content-Type to multipart/form-data with FormData
-      const response = await axiosInstance[method](url, data);
+    try {
+      // Send data as FormData
+      const response = await axiosInstance[method](url, data, {
+         headers: { 'Content-Type': 'multipart/form-data' } // Explicitly set multipart for FormData
+      });
       
       if (!response.data || !response.data.success) {
-        throw new Error('Failed to save event');
+        throw new Error(response.data?.message || 'Failed to save event');
       }
 
       showToast.success(id ? 'Event updated successfully!' : 'Event created successfully!');
       
-      // Add a small delay before navigation to ensure the events list is updated
       setTimeout(() => {
         navigate('/organizer/events');
       }, 1000);
     } catch (err) {
       console.error('Error saving event:', err);
-      showToast.error(err.response?.data?.message || 'Failed to save event');
+      // Check if the error response contains specific validation errors
+      if (err.response?.data?.errors) {
+         // Assuming backend sends errors in an array with 'field' and 'message'
+         const backendErrors = {};
+         err.response.data.errors.forEach(err => {
+            backendErrors[err.field] = err.message;
+         });
+         setFormErrors(prevErrors => ({ ...prevErrors, ...backendErrors }));
+         showToast.error(err.response.data.message || 'Validation Error');
+      } else {
+         showToast.error(err.response?.data?.message || 'Failed to save event');
+      }
     } finally {
       setSubmitting(false);
     }
