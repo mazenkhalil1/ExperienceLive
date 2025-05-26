@@ -20,7 +20,7 @@ router.get("/all", authMiddleware, authorize(["admin"]), eventController.getAllE
 router.get("/:id", eventController.getEvent);
 
 // Event Organizer routes
-router.post("/", authMiddleware, authorize(["organizer"]), upload.none(), eventController.createEvent);
+router.post("/", authMiddleware, authorize(["organizer"]), upload.any(), eventController.createEvent);
 router.put("/:id", authMiddleware, authorize(["organizer", "admin"]), eventController.updateEvent);
 router.delete("/:id", authMiddleware, authorize(["organizer", "admin"]), eventController.deleteEvent);
 
