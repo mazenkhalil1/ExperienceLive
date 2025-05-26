@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchFilter } from '../../context/SearchFilterContext';
 import { ROUTES } from '../../constants/routes';
 
-function Navbar({ locations, categories }) {
+function Navbar({ locations = [], categories = [] }) {
   const { user, isAuthenticated, logout } = useUser();
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
