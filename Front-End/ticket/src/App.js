@@ -1,31 +1,35 @@
 import './App.css';
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { SearchFilterProvider } from './context/SearchFilterContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
-import ForgetPasswordForm from './components/auth/ForgetPasswordForm';
-import ProfilePage from './components/profile/ProfilePage';
-import EventDetails from './components/events/EventDetails';
-import EventList from './components/events/EventList';
+import { ROUTES } from './constants/routes';
+
+// Layout Components
 import Navbar from './components/navigation/Navbar';
 import Footer from './components/shared/Footer';
-import AdminUsersPage from './components/AdminUsersPage';
-import MyEventsPage from './components/events/MyEventsPage';
-import EventForm from './components/events/EventForm';
-import EventAnalytics from './components/events/EventAnalytics';
-import AdminEventsPage from './components/events/AdminEventsPage';
-import UserBookingsPage from './components/bookings/UserBookingsPage';
-import BookingDetails from './components/bookings/BookingDetails';
-import axiosInstance from './services/axiosConfig';
+import Loader from './components/shared/Loader';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { SearchFilterProvider } from './context/SearchFilterContext';
+// Lazy-loaded components
+const LoginForm = lazy(() => import('./components/auth/LoginForm'));
+const RegisterForm = lazy(() => import('./components/auth/RegisterForm'));
+const ForgetPasswordForm = lazy(() => import('./components/auth/ForgetPasswordForm'));
+const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
+const EventDetails = lazy(() => import('./components/events/EventDetails'));
+const EventList = lazy(() => import('./components/events/EventList'));
+const AdminUsersPage = lazy(() => import('./components/AdminUsersPage'));
+const MyEventsPage = lazy(() => import('./components/events/MyEventsPage'));
+const EventForm = lazy(() => import('./components/events/EventForm'));
+const EventAnalytics = lazy(() => import('./components/events/EventAnalytics'));
+const AdminEventsPage = lazy(() => import('./components/events/AdminEventsPage'));
+const UserBookingsPage = lazy(() => import('./components/bookings/UserBookingsPage'));
+const BookingDetails = lazy(() => import('./components/bookings/BookingDetails'));
+const UnauthorizedPage = lazy(() => import('./components/shared/UnauthorizedPage'));
+const NotFoundPage = lazy(() => import('./components/shared/NotFoundPage'));
 
 function App() {
   return (
@@ -43,56 +47,24 @@ function App() {
 
 function ThemedApp() {
   const { isDarkMode } = useTheme();
-  const location = useLocation();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isRegisterModalOpen, setIsRegisterModalModalOpen] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    const fetchEventsData = async () => {
-      try {
-        const response = await axiosInstance.get('/events');
-        if (!response.data) {
-          throw new Error('No data received from server');
-        }
-        const fetchedEvents = response.data.data || [];
-        setEvents(fetchedEvents);
-        
-        const uniqueLocations = [...new Set(fetchedEvents.map(event => event.location).filter(loc => loc != null && loc !== ''))];
-        setLocations(uniqueLocations);
-
-        const uniqueCategories = [...new Set(fetchedEvents.map(event => event.category).filter(cat => cat != null && cat !== ''))];
-        setCategories(uniqueCategories);
-
-      } catch (err) {
-        console.error('Error fetching events for filters:', err);
-      }
-    };
-
-    fetchEventsData();
-  }, []);
-
-  const openLoginModal = () => setIsLoginModalOpen(true);
-  const closeLoginModal = () => setIsLoginModalOpen(false);
-  const openRegisterModal = () => setIsRegisterModalModalOpen(true);
-  const closeRegisterModal = () => setIsRegisterModalModalOpen(false);
 
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black' : 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-50 via-white to-white'} transition-colors duration-200`}>
-      <Navbar openLoginModal={openLoginModal} openRegisterModal={openRegisterModal} locations={locations} categories={categories} />
+      <Navbar />
       <main className="flex-1 py-6 px-4 sm:px-6 lg:px-8 mt-16">
-        <AnimatePresence mode='wait' initial={false}>
-          <Routes location={location} key={location.pathname}>
+        <Suspense fallback={<Loader size="lg" />}>
+          <Routes>
             {/* Public routes */}
-            <Route path="/" element={<EventList events={events} />} />
-            <Route path="/forget-password" element={<ForgetPasswordForm />} />
-            <Route path="/events/:id" element={<EventDetails />} />
+            <Route path={ROUTES.HOME} element={<EventList />} />
+            <Route path={ROUTES.LOGIN} element={<LoginForm />} />
+            <Route path={ROUTES.REGISTER} element={<RegisterForm />} />
+            <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgetPasswordForm />} />
+            <Route path={ROUTES.EVENT_DETAILS} element={<EventDetails />} />
+            <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
 
-            {/* Protected profile route - accessible by all authenticated users */}
+            {/* Protected profile route */}
             <Route 
-              path="/profile" 
+              path={ROUTES.PROFILE} 
               element={
                 <ProtectedRoute allowedRoles={['admin', 'organizer', 'user']}>
                   <ProfilePage />
@@ -102,14 +74,14 @@ function ThemedApp() {
 
             {/* Admin routes */}
             <Route 
-              path="/admin/*" 
+              path={ROUTES.ADMIN.ROOT} 
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Routes>
                     <Route path="dashboard" element={<AdminUsersPage />} />
                     <Route path="users" element={<AdminUsersPage />} />
                     <Route path="events" element={<AdminEventsPage />} />
-                    <Route path="*" element={<Navigate to="dashboard" replace />} />
+                    <Route path="*" element={<Navigate to={ROUTES.ADMIN.DASHBOARD} replace />} />
                   </Routes>
                 </ProtectedRoute>
               } 
@@ -117,7 +89,7 @@ function ThemedApp() {
             
             {/* Organizer routes */}
             <Route 
-              path="/organizer/*" 
+              path={`${ROUTES.ORGANIZER.ROOT}/*`}
               element={
                 <ProtectedRoute allowedRoles={['organizer']}>
                   <Routes>
@@ -125,7 +97,7 @@ function ThemedApp() {
                     <Route path="events/new" element={<EventForm />} />
                     <Route path="events/edit/:id" element={<EventForm />} />
                     <Route path="analytics" element={<EventAnalytics />} />
-                    <Route path="*" element={<Navigate to="events" replace />} />
+                    <Route path="*" element={<Navigate to={ROUTES.ORGANIZER.EVENTS} replace />} />
                   </Routes>
                 </ProtectedRoute>
               } 
@@ -133,7 +105,7 @@ function ThemedApp() {
 
             {/* Protected User routes */}
             <Route 
-              path="/my-events" 
+              path={ROUTES.MY_EVENTS} 
               element={
                 <ProtectedRoute allowedRoles={['user', 'organizer']}>
                   <EventList userOnly={true} />
@@ -143,7 +115,7 @@ function ThemedApp() {
 
             {/* Booking routes */}
             <Route 
-              path="/bookings" 
+              path={ROUTES.BOOKINGS} 
               element={
                 <ProtectedRoute allowedRoles={['user', 'admin']}>
                   <UserBookingsPage />
@@ -151,15 +123,18 @@ function ThemedApp() {
               } 
             />
             <Route 
-              path="/bookings/:id" 
+              path={ROUTES.BOOKING_DETAILS} 
               element={
                 <ProtectedRoute allowedRoles={['user', 'admin']}>
                   <BookingDetails />
                 </ProtectedRoute>
               } 
             />
+
+            {/* Catch-all route for 404 */}
+            <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
           </Routes>
-        </AnimatePresence>
+        </Suspense>
       </main>
       <Footer />
       <ToastContainer
@@ -174,54 +149,6 @@ function ThemedApp() {
         pauseOnHover
         theme="colored"
       />
-
-      {/* Login Modal */}
-      <AnimatePresence>
-        {isLoginModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={closeLoginModal}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 50 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <LoginForm closeModal={closeLoginModal} openRegisterModal={openRegisterModal} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Register Modal */}
-      <AnimatePresence>
-        {isRegisterModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={closeRegisterModal}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 50 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <RegisterForm closeModal={closeRegisterModal} openLoginModal={openLoginModal} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
