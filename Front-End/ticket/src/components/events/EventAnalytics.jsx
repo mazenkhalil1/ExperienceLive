@@ -4,12 +4,36 @@ import axiosInstance from '../../services/axiosConfig';
 import { useUser } from '../../context/UserContext';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { showToast } from '../shared/Toast';
+import Loader from '../shared/Loader';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const EventAnalytics = () => {
   const navigate = useNavigate();
   const { user, userRole } = useUser();
   const { isDarkMode } = useTheme();
-  const [analytics, setAnalytics] = useState([]);
+  const [analytics, setAnalytics] = useState({
+    bookingsByEvent: [],
+    revenueByEvent: [],
+    bookingsByDate: [],
+    ticketTypeDistribution: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -78,23 +102,17 @@ const EventAnalytics = () => {
       // Verify access before making the request
       verifyAccess();
       
-      const res = await axiosInstance.get('/users/events/analytics');
+      const res = await axiosInstance.get('/events/analytics');
       
       if (!res.data) {
         throw new Error('No data received from server');
       }
 
-      if (!Array.isArray(res.data)) {
-        throw new Error('Invalid data format received from server');
+      if (!res.data.success) {
+        throw new Error('Failed to fetch analytics data');
       }
 
-      // Transform data - remove % symbol and convert to number
-      const eventData = res.data.map(event => ({
-        name: event.title,
-        bookingPercentage: parseFloat(event.percentBooked)
-      }));
-
-      setAnalytics(eventData);
+      setAnalytics(res.data.data);
       setError(null);
     } catch (error) {
       if (!user || !userRole) {
@@ -103,6 +121,7 @@ const EventAnalytics = () => {
       }
       
       setError(error.response?.data?.message || error.message || 'Failed to load analytics data');
+      showToast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
     }
@@ -112,16 +131,10 @@ const EventAnalytics = () => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen-except-nav-footer pt-16 px-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  if (loading) return <Loader />;
 
   if (error) {
-  return (
+    return (
       <div className="flex justify-center items-center min-h-screen-except-nav-footer pt-16 px-4">
         <div className="text-center">
           <p className="text-red-600 dark:text-red-400 text-xl mb-4">{error}</p>
@@ -132,28 +145,9 @@ const EventAnalytics = () => {
             Try Again
           </button>
         </div>
-        </div>
+      </div>
     );
   }
-
-  if (!analytics.length) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex justify-center items-center min-h-screen-except-nav-footer pt-16 px-4"
-      >
-        <div className="text-center text-gray-500 dark:text-gray-400 text-xl">
-          No analytics data available. Create and sell some events to see analytics here.
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Calculate average booking percentage
-  const averageBookingPercentage = (
-    analytics.reduce((sum, event) => sum + event.bookingPercentage, 0) / analytics.length
-  ).toFixed(1);
 
   return (
     <motion.div 
@@ -187,7 +181,7 @@ const EventAnalytics = () => {
                className="bg-gray-50 dark:bg-gray-700 rounded-lg p-7 border border-gray-200 dark:border-gray-600 mb-8 shadow-md"
             >
               <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Overall Booking Rate</h3>
-              <p className="text-5xl font-extrabold text-purple-700 dark:text-purple-400">{averageBookingPercentage}%</p>
+              <p className="text-5xl font-extrabold text-purple-700 dark:text-purple-400">{analytics.bookingsByEvent.reduce((sum, event) => sum + event.bookings, 0) / analytics.bookingsByEvent.length}%</p>
               <p className="text-base text-gray-500 dark:text-gray-400 mt-3">Average across all your events</p>
             </motion.div>
 
@@ -202,7 +196,7 @@ const EventAnalytics = () => {
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Event Booking Details</h3>
               </div>
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {analytics.map((event, index) => (
+                {analytics.bookingsByEvent.map((event, index) => (
                   <motion.div 
                      key={index} 
                      initial={{ opacity: 0, x: -20 }}
@@ -214,21 +208,21 @@ const EventAnalytics = () => {
                       <h4 className="text-lg font-semibold text-gray-800 dark:text-white">{event.name}</h4>
                       <div className="mt-2 sm:mt-0">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium shadow-sm 
-                          ${event.bookingPercentage >= 75 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 
-                          event.bookingPercentage >= 25 ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' : 
+                          ${event.bookings >= 75 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 
+                          event.bookings >= 25 ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' : 
                           'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100'}`}>
-                          {event.bookingPercentage.toFixed(1)}% Booked
+                          {event.bookings} Bookings
                         </span>
                       </div>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3.5">
                       <motion.div 
                         initial={{ width: 0 }}
-                        animate={{ width: `${event.bookingPercentage}%` }}
+                        animate={{ width: `${event.bookings}%` }}
                         transition={{ duration: 0.8, delay: 0.1 * index + 0.8 }}
                         className={`h-3.5 rounded-full ${
-                          event.bookingPercentage >= 75 ? 'bg-green-600' : 
-                          event.bookingPercentage >= 25 ? 'bg-blue-600' : 
+                          event.bookings >= 75 ? 'bg-green-600' : 
+                          event.bookings >= 25 ? 'bg-blue-600' : 
                           'bg-yellow-600'
                         }`}
                       >
@@ -238,6 +232,83 @@ const EventAnalytics = () => {
                 ))}
               </div>
             </motion.div>
+
+            {/* Bookings by Event */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-8">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Bookings by Event</h2>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.bookingsByEvent}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="bookings" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Revenue by Event */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-8">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Revenue by Event</h2>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.revenueByEvent}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="revenue" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Bookings Over Time */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-8">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Bookings Over Time</h2>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={analytics.bookingsByDate}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="bookings" stroke="#8884d8" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Ticket Type Distribution */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-8">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Ticket Type Distribution</h2>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics.ticketTypeDistribution}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={150}
+                      label
+                    >
+                      {analytics.ticketTypeDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
             {/* Footer */}
             <div className="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">

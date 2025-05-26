@@ -37,19 +37,6 @@ function Navbar({ locations, categories }) {
     }
   };
 
-  // Animation variants for mobile menu
-  const menuVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.3,
-        staggerChildren: 0.1
-      }
-    }
-  };
-
   return (
     <motion.nav 
       initial="hidden"
