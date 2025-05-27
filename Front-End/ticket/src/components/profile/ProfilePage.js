@@ -14,6 +14,28 @@ const ProfilePage = () => {
   // Format date of birth if it exists
   const formattedBirthdate = user?.birthdate ? new Date(user.birthdate).toLocaleDateString() : 'N/A';
 
+  // Add this function to calculate days since user joined
+  const calculateMembershipDuration = (createdAtDate) => {
+    if (!createdAtDate) return "N/A";
+    
+    try {
+      const joinDate = new Date(createdAtDate);
+      const today = new Date();
+      
+      // Calculate difference in milliseconds
+      const diffTime = Math.abs(today - joinDate);
+      // Convert to days
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "1 day";
+      return `${diffDays} days`;
+    } catch (error) {
+      console.error('Error calculating membership duration:', error);
+      return "N/A";
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen-except-nav-footer pt-16 px-4">
@@ -77,7 +99,9 @@ const ProfilePage = () => {
           {/* Name, Member Since, Edit Button */}
           <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-1 font-serif">{user.name}</h1>
-            <p className="text-gray-600 dark:text-gray-400 text-base md:text-lg">Member Since {new Date(user.createdAt).getFullYear()}</p>
+            <p className="text-gray-600 dark:text-gray-400 text-base md:text-lg">
+              Member Since {calculateMembershipDuration(user.createdAt)}
+            </p>
             <button
               onClick={() => setIsEditing(!isEditing)}
               className="mt-4 px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
@@ -98,14 +122,14 @@ const ProfilePage = () => {
           >
              {/* Contact Information */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div className="flex items-center text-gray-700 dark:text-gray-300">
+                 {/* <div className="flex items-center text-gray-700 dark:text-gray-300">
                      <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 10a4 4 0 01-1.382 3.09l-3.62 3.62a1 1 0 001.414 1.414l3.62-3.62A6 6 0 0021 12h-4a2 2 0 00-2 2v1z"></path></svg>
                      <span>{user.phone || 'N/A'}</span>
                  </div>
                  <div className="flex items-center text-gray-700 dark:text-gray-300">
                     <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     <span>{formattedBirthdate}</span>
-                 </div>
+                 </div> */}
                  <div className="flex items-center text-gray-700 dark:text-gray-300">
                      <svg className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 0a5 5 0 11-7.072 0m7.072 0L5.636 18.364m0 0a5 5 0 110-7.072m0 7.072L18.364 5.636m0 0a5 5 0 107.072 7.072M18.364 5.636A5 5 0 1011.292 12.708M12.708 11.292a5 5 0 10-7.072 7.072M18.364 5.636L5.636 18.364"></path>
@@ -130,4 +154,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

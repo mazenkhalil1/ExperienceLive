@@ -125,7 +125,7 @@ function LoginForm({ openRegisterModal }) {
           </div>
           <div className="text-center">
             <Link 
-              to="/forget-password" 
+              to="/forgot-password" 
               className={`text-sm ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'} transition-colors duration-200`}
             >
               Forgot Password?

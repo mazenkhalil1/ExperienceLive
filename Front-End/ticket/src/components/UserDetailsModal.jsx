@@ -34,6 +34,53 @@ const UserDetailsModal = ({ isOpen, onClose, userId }) => {
     }
   };
 
+  const formatMemberSince = (dateString) => {
+    if (!dateString) return 'N/A';
+
+    try {
+      // Check if our date is in the future (which shouldn't happen)
+      const date = new Date(dateString);
+      const now = new Date();
+
+      // If the date is in the future or very close to now, it's likely a system/timezone issue
+      if (date > now || Math.abs(now - date) < 1000 * 60 * 1) {
+        // within 5 minutes
+        // Just display today's date in a standard format
+        return 'Today';
+      }
+
+      // Continue with your existing relative time function
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+      const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+      if (diffMinutes < 60) {
+        return diffMinutes <= 1 ? 'Just now' : `${diffMinutes} minutes ago`;
+      } else if (diffHours < 24) {
+        return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+      } else if (diffDays === 0) {
+        return 'Today';
+      } else if (diffDays === 1) {
+        return 'Yesterday';
+      } else if (diffDays < 7) {
+        return `${diffDays} days ago`;
+      } else if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7);
+        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+      } else if (diffDays < 365) {
+        const months = Math.floor(diffDays / 30);
+        return months === 1 ? '1 month ago' : `${months} months ago`;
+      } else {
+        const years = Math.floor(diffDays / 365);
+        return years === 1 ? '1 year ago' : `${years} years ago`;
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown date';
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -71,24 +118,31 @@ const UserDetailsModal = ({ isOpen, onClose, userId }) => {
               </div>
               <div>
                 <h3 className="text-gray-600 font-medium">Role</h3>
-                <span className={`px-2 py-1 inline-flex text-sm font-semibold rounded-full 
-                  ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 
-                    user.role === 'organizer' ? 'bg-blue-100 text-blue-800' : 
-                    'bg-green-100 text-green-800'}`}>
+                <span
+                  className={`px-2 py-1 inline-flex text-sm font-semibold rounded-full ${
+                    user.role === 'admin'
+                      ? 'bg-purple-100 text-purple-800'
+                      : user.role === 'organizer'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-green-100 text-green-800'
+                  }`}
+                >
                   {user.role}
                 </span>
               </div>
               <div>
                 <h3 className="text-gray-600 font-medium">Member Since</h3>
                 <p className="text-gray-900">
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {formatMemberSince(user.createdAt)}
                 </p>
               </div>
             </div>
 
             {user.profilePicture && (
               <div className="mt-4">
-                <h3 className="text-gray-600 font-medium mb-2">Profile Picture</h3>
+                <h3 className="text-gray-600 font-medium mb-2">
+                  Profile Picture
+                </h3>
                 <img
                   src={user.profilePicture}
                   alt={`${user.name}'s profile`}
@@ -105,4 +159,4 @@ const UserDetailsModal = ({ isOpen, onClose, userId }) => {
   );
 };
 
-export default UserDetailsModal; 
+export default UserDetailsModal;
