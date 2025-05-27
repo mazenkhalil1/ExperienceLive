@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import axiosInstance from '../../services/axiosConfig';
 
 function ForgetPasswordForm() {
   const [email, setEmail] = useState('');
@@ -21,7 +22,7 @@ function ForgetPasswordForm() {
     setError('');
 
     try {
-      const res = await axios.put('http://localhost:5000/api/v1/forgetPassword', { email });
+      const res = await axiosInstance.put('/api/v1/forgetPassword', { email });
       setMessage('OTP sent successfully. Please check your email and enter the OTP below.');
       setStep(2);
       console.log('OTP request success:', res.data);
@@ -42,7 +43,7 @@ function ForgetPasswordForm() {
     }
 
     try {
-      const res = await axios.put('http://localhost:5000/api/v1/resetPassword', {
+      const res = await axiosInstance.put('/api/v1/resetPassword', {
         email,
         otp,
         newPassword
@@ -55,23 +56,6 @@ function ForgetPasswordForm() {
     } catch (err) {
       console.error('Password reset error:', err.response?.data || err.message);
       setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      await axios.post('http://localhost:5000/api/v1/users/forgot-password', {
-        email,
-      });
-      setSuccess(true);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send reset email');
-    } finally {
-      setLoading(false);
     }
   };
 

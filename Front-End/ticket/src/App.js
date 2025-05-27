@@ -1,5 +1,5 @@
 import './App.css';
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -7,6 +7,7 @@ import { SearchFilterProvider } from './context/SearchFilterContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ROUTES } from './constants/routes';
+import axiosInstance from './services/axiosConfig';
 
 // Layout Components
 import Navbar from './components/navigation/Navbar';
@@ -15,9 +16,9 @@ import Loader from './components/shared/Loader';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Lazy-loaded components
+import ForgetPasswordForm from './components/auth/ForgetPasswordForm';
 const LoginForm = lazy(() => import('./components/auth/LoginForm'));
 const RegisterForm = lazy(() => import('./components/auth/RegisterForm'));
-const ForgetPasswordForm = lazy(() => import('./components/auth/ForgetPasswordForm'));
 const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
 const EventDetails = lazy(() => import('./components/events/EventDetails'));
 const EventList = lazy(() => import('./components/events/EventList'));
@@ -30,6 +31,8 @@ const UserBookingsPage = lazy(() => import('./components/bookings/UserBookingsPa
 const BookingDetails = lazy(() => import('./components/bookings/BookingDetails'));
 const UnauthorizedPage = lazy(() => import('./components/shared/UnauthorizedPage'));
 const NotFoundPage = lazy(() => import('./components/shared/NotFoundPage'));
+const AllEventsPage = lazy(() => import('./pages/AllEventsPage'));
+const MfaPrompt = lazy(() => import('./components/auth/MfaPrompt'));
 
 function App() {
   return (
@@ -47,10 +50,41 @@ function App() {
 
 function ThemedApp() {
   const { isDarkMode } = useTheme();
+  const [allEvents, setAllEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+
+  useEffect(() => {
+    const fetchAllEvents = async () => {
+      try {
+        const response = await axiosInstance.get('/events');
+        setAllEvents(response.data.data || []);
+      } catch (error) {
+        console.error('Error fetching all events:', error);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+    fetchAllEvents();
+  }, []);
+
+  // Extract unique locations and categories
+  const locations = useMemo(() => {
+    const uniqueLocations = new Set(allEvents.map(event => event.location).filter(location => location));
+    return Array.from(uniqueLocations);
+  }, [allEvents]);
+
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set(allEvents.map(event => event.category).filter(category => category));
+    return Array.from(uniqueCategories);
+  }, [allEvents]);
+
+  if (loadingEvents) {
+    return <Loader size="lg" />;
+  }
 
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black' : 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-50 via-white to-white'} transition-colors duration-200`}>
-      <Navbar />
+      <Navbar locations={locations} categories={categories} />
       <main className="flex-1 py-6 px-4 sm:px-6 lg:px-8 mt-16">
         <Suspense fallback={<Loader size="lg" />}>
           <Routes>
@@ -61,6 +95,8 @@ function ThemedApp() {
             <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgetPasswordForm />} />
             <Route path={ROUTES.EVENT_DETAILS} element={<EventDetails />} />
             <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
+            <Route path={ROUTES.ALL_EVENTS} element={<AllEventsPage />} />
+            <Route path={ROUTES.MFA_PROMPT} element={<MfaPrompt />} />
 
             {/* Protected profile route */}
             <Route 
@@ -131,7 +167,7 @@ function ThemedApp() {
                 <ProtectedRoute allowedRoles={['user', 'admin']}>
                   <UserBookingsPage />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route 
               path={ROUTES.BOOKING_DETAILS} 

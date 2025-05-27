@@ -65,9 +65,13 @@ router.post('/test-register', async (req, res) => {
 // Public routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-router.put('/forgetPassword', authController.forgetPassword);
-router.put('/resetPassword', authController.resetPassword);
+router.put('/api/v1/forgetPassword', authController.forgetPassword);
+router.put('/api/v1/resetPassword', authController.resetPassword);
 router.get('/logOut', authController.logOut); // Add logout endpoint
+
+// MFA related routes
+router.post('/send-otp', authController.sendMfaOtp);
+router.post('/verify-mfa', authController.verifyMfa);
 
 // Protected routes
 router.get('/verify-token', authMiddleware, authController.checkToken);

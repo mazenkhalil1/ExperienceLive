@@ -8,11 +8,12 @@ import { useUser } from '../../context/UserContext';
 import BookTicketForm from '../bookings/BookTicketForm';
 import { useTheme } from '../../context/ThemeContext';
 import { ROUTES } from '../../constants/routes';
+import { Link } from 'react-router-dom';
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated, user } = useUser();
   const { isDarkMode } = useTheme();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -248,62 +249,44 @@ const EventDetails = () => {
           {!isAuthenticated ? (
             <div className="text-center space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
-                Please login or register to book tickets for this event.
+                Please log in to book tickets.
               </p>
+              <Link
+                to={ROUTES.LOGIN}
+                state={{ from: `/events/${id}`, message: 'Please login to book tickets for this event.' }}
+                className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-600 transition-colors duration-200"
+              >
+                Login to Book
+              </Link>
+            </div>
+          ) : (
+             // Only show if user has the 'user' role
+             user?.role === 'user' && (
               <motion.button
-                onClick={() => {
-                  navigate(ROUTES.LOGIN, { 
-                    state: { from: `/events/${id}` }
-                  });
-                }}
-                className={`px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition-colors duration-200 ${isDarkMode ? 'dark:bg-blue-500 dark:hover:bg-blue-600' : ''}`}
+                onClick={() => setShowBookingForm(!showBookingForm)}
+                className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-lg hover:bg-yellow-600 transition-colors duration-200"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Login to Book
+                Book Now
               </motion.button>
-            </div>
-          ) : (
-            <motion.button
-              onClick={() => setShowBookingForm(true)}
-              className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-lg hover:bg-yellow-600 transition-colors duration-200"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Book Now
-            </motion.button>
+            )
           )}
+
+          <AnimatePresence>
+            {showBookingForm && event && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"
+              >
+                <BookTicketForm event={event} onClose={() => setShowBookingForm(false)} onBookingComplete={handleBookingComplete} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
       </div>
-
-      {/* Booking Form Modal */}
-      <AnimatePresence>
-        {showBookingForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowBookingForm(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 50 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <BookTicketForm 
-                event={event}
-                onComplete={handleBookingComplete}
-                onCancel={() => setShowBookingForm(false)}
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };

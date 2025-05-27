@@ -13,7 +13,7 @@ function Navbar({ locations, categories }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { searchTerm, setSearchTerm, filters, setFilters, resetFilters } = useSearchFilter();
+  const { searchTerm, setSearchTerm } = useSearchFilter();
   const searchContainerRef = useRef(null);
 
   const handleLogout = async () => {
@@ -79,86 +79,6 @@ function Navbar({ locations, categories }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-
-          <AnimatePresence>
-            {isSearchFocused && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute top-full mt-3 w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 space-y-3 border dark:border-gray-700"
-              >
-                {/* Filters Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Date Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-                    <input
-                      type="date"
-                      className="w-full p-2 border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
-                      value={filters.date}
-                      onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                    />
-                  </div>
-
-                  {/* Location Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                    <select
-                      className="w-full p-2 border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
-                      value={filters.location}
-                      onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                    >
-                      <option value="">All Locations</option>
-                      {locations.map(location => (
-                        <option key={location} value={location}>{location}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Category Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                    <select
-                      className="w-full p-2 border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
-                      value={filters.category}
-                      onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                    >
-                      <option value="all">All Categories</option>
-                      {categories.map(category => (
-                        <option key={category} value={category}>
-                          {category.charAt(0).toUpperCase() + category.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Price Range Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price Range</label>
-                    <select
-                      className="w-full p-2 border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
-                      value={filters.priceRange}
-                      onChange={(e) => setFilters({ ...filters, priceRange: e.target.value })}
-                    >
-                      <option value="all">All Prices</option>
-                      <option value="0-50">Under $50</option>
-                      <option value="51-100">$51 - $100</option>
-                      <option value="101-200">$101 - $200</option>
-                      <option value="201">$201+</option>
-                    </select>
-                  </div>
-                </div>
-                <button 
-                  onClick={resetFilters}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-200 text-sm mt-2"
-                >
-                  Clear Filters
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         <div className="hidden md:flex items-center space-x-8">

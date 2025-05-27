@@ -3,8 +3,10 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
-  FORGOT_PASSWORD: '/forgot-password',
+  FORGOT_PASSWORD: '/forget-password',
   EVENT_DETAILS: '/events/:id',
+  ALL_EVENTS: '/all-events',
+  MFA_PROMPT: '/mfa',
   
   // Protected routes
   PROFILE: '/profile',

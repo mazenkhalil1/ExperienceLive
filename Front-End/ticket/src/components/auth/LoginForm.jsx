@@ -5,6 +5,7 @@ import axiosInstance from '../../services/axiosConfig';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
+import { ROUTES } from '../../constants/routes';
 
 function LoginForm({ openRegisterModal }) {
   const [email, setEmail] = useState('');
@@ -48,21 +49,32 @@ function LoginForm({ openRegisterModal }) {
       const response = await axiosInstance.post('/login', { email, password });
 
       console.log('Login successful:', response.data);
-      // Extract user data from the response
-      const userData = response.data.user; // Assuming user data is in response.data.user
-      const token = response.data.token; // Assuming token is in response.data.token
-
-      // Pass the complete user data and token to the login function from UserContext
-      login(userData, token);
-
-      // Clear any previous errors on success
-      setError(null);
-
-      toast.success('Login successful!');
       
-      // Redirect to the page the user was trying to access, or to the home page
-      const from = location.state?.from || '/';
-      navigate(from);
+      // Check if MFA is required
+      if (response.data.mfaRequired) {
+        console.log('MFA is required. Redirecting to MFA prompt.');
+        // Store userId for MFA verification step
+        localStorage.setItem('userId', response.data.userId);
+        toast.info('MFA required. Please enter the code sent to your email.');
+        navigate(ROUTES.MFA_PROMPT);
+      } else {
+        // Standard login successful
+        console.log('Standard login successful.');
+        // Extract user data and token from the response
+        const userData = response.data.user; // Assuming user data is in response.data.user
+        const token = response.data.token; // Assuming token is in response.data.token
+
+        // Pass the complete user data and token to the login function from UserContext
+        login(userData, token);
+
+        // Clear any previous errors on success
+        setError(null);
+
+        toast.success('Login successful!');
+        
+        // Redirect to the home page
+        navigate(ROUTES.HOME);
+      }
 
     } catch (err) {
       console.error('Login failed:', err);

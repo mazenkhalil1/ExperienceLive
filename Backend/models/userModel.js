@@ -38,6 +38,18 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false
     },
+    mfaEnabled: {
+      type: Boolean,
+      default: false
+    },
+    mfaOTP: {
+      type: String,
+      select: false
+    },
+    mfaOTPExpires: {
+      type: Date,
+      select: false
+    },
     bookings: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Booking'

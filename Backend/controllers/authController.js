@@ -2,6 +2,7 @@ const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 
 const authController = {
   // Test endpoint to check token
@@ -40,10 +41,11 @@ const authController = {
       
       // Find user by email
       console.log('Looking for user with email:', email);
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email }).select('+mfaEnabled +mfaOTP +mfaOTPExpires');
       console.log("User password from database:", user?.password);
 
       console.log('User found:', user ? 'Yes' : 'No');
+      console.log('MFA Enabled for user:', user?.mfaEnabled);
       
       if (!user) {
         console.log('No user found with email:', email);
@@ -68,41 +70,52 @@ const authController = {
           console.log('Password does not match');
           return res.status(400).json({ message: 'Invalid email or password' });
         }
-      } catch (error) {
-        console.error('Error during password comparison:', error);
-        return res.status(500).json({ message: 'Error verifying password' });
-      }
-      
-      // Create token
-      console.log('Creating JWT token...');
-      const token = jwt.sign(
-        { userId: user._id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-      console.log('JWT token created successfully');
-      
-      // Set cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
-      
-      console.log('Login successful for user:', email);
-      
-      // Return success response
-      return res.status(200).json({ 
-        success: true,
-        message: "Login successful", 
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role
+
+        // Check if MFA is enabled
+        if (user.mfaEnabled) {
+          // Return a response indicating MFA is required
+          return res.status(200).json({
+            success: true,
+            message: "MFA required",
+            mfaRequired: true,
+            userId: user._id // Send userId for subsequent MFA steps
+          });
         }
-      });
+      
+        // If MFA is not enabled, proceed with login (create token, set cookie, etc.)
+        console.log('Creating JWT token...');
+        const token = jwt.sign(
+          { userId: user._id, role: user.role },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+        console.log('JWT token created successfully');
+        
+        // Set cookie
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+        
+        console.log('Login successful for user:', email);
+        
+        // Return success response
+        return res.status(200).json({ 
+          success: true,
+          message: "Login successful", 
+          token,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+          }
+        });
+      } catch (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ message: "Server error", error: err.message });
+      }
     } catch (err) {
       console.error("Login error:", err);
       return res.status(500).json({ message: "Server error", error: err.message });
@@ -218,6 +231,99 @@ const authController = {
     }
   },
 
+  // POST /auth/send-otp
+  sendMfaOtp: async (req, res) => {
+    try {
+      const { userId } = req.body;
+
+      // Find the user by ID and select MFA fields
+      const user = await User.findById(userId).select('+mfaOTP +mfaOTPExpires +mfaEnabled');
+
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found." });
+      }
+
+      if (!user.mfaEnabled) {
+         return res.status(400).json({ success: false, message: "MFA is not enabled for this user." });
+      }
+
+      // Generate 6-digit OTP
+      const mfaOTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Store OTP and expiry in user document
+      user.mfaOTP = mfaOTP;
+      user.mfaOTPExpires = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+      await user.save();
+
+      // Send email with OTP
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Your MFA Code',
+          message: `Your MFA code is: ${mfaOTP}. It is valid for 10 minutes.`
+        });
+        console.log('MFA OTP email sent successfully for user:', user.email);
+        return res.status(200).json({ success: true, message: "MFA OTP sent to your email." });
+      } catch (emailError) {
+        console.error('Error sending MFA OTP email:', emailError);
+        return res.status(500).json({ success: false, message: "Error sending MFA OTP email." });
+      }
+
+    } catch (err) {
+      console.error('Error in sendMfaOtp:', err);
+      return res.status(500).json({ success: false, message: "Server error." });
+    }
+  },
+
+  // POST /api/v1/verify-mfa
+  verifyMfa: async (req, res) => {
+    try {
+      const { userId, mfaCode } = req.body;
+
+      // Find the user by ID
+      const user = await User.findById(userId).select('+mfaOTP +mfaOTPExpires');
+
+      // Check if user exists, MFA code matches, and OTP is not expired
+      if (!user || user.mfaOTP !== mfaCode || user.mfaOTPExpires < Date.now()) {
+        return res.status(400).json({ success: false, message: "Invalid or expired MFA code" });
+      }
+
+      // Clear MFA OTP fields after successful verification
+      user.mfaOTP = undefined;
+      user.mfaOTPExpires = undefined;
+      await user.save();
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      // Set cookie
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "MFA verification successful",
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+
+    } catch (err) {
+      console.error('MFA verification error:', err);
+      return res.status(500).json({ message: "Server error", error: err.message });
+    }
+  },
+
   // PUT /api/v1/forgetPassword
   forgetPassword: async (req, res) => {
     try {
@@ -242,12 +348,32 @@ const authController = {
       user.resetPasswordOTPExpires = Date.now() + 600000; // 10 minutes
       await user.save();
 
-      // Return OTP in response (for testing purposes)
-      return res.status(200).json({ 
-        message: "OTP generated successfully", 
-        otp: otp,
-        validFor: "10 minutes"
-      });
+      // Send email with OTP
+      const message = `Your password reset OTP is: ${otp}. It is valid for 10 minutes.`;
+
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Password Reset OTP',
+          message
+        });
+        console.log('Password reset OTP email sent successfully for user:', user.email);
+
+        // Return OTP in response (for testing purposes - remove in production)
+        return res.status(200).json({ 
+          success: true,
+          message: "OTP generated and email sent successfully", 
+          otp: otp, // Keep for testing
+          validFor: "10 minutes"
+        });
+      } catch (emailError) {
+        console.error('Error sending password reset OTP email:', emailError);
+        // Consider clearing OTP fields on email send failure if it's critical the user receives the email
+        // user.resetPasswordOTP = undefined;
+        // user.resetPasswordOTPExpires = undefined;
+        // await user.save();
+        return res.status(500).json({ success: false, message: "Error sending password reset email." });
+      }
     } catch (err) {
       console.error("Forget password error:", err);
       return res.status(500).json({ message: "Server error", error: err.message });
