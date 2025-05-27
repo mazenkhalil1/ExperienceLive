@@ -107,9 +107,11 @@ exports.getBooking = async (req, res, next) => {
 // Cancel booking
 exports.cancelBooking = async (req, res, next) => {
   try {
+    console.log('Received cancel booking request for ID:', req.params.id);
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
+      console.log('Booking not found for ID:', req.params.id);
       return res.status(404).json({
         success: false,
         message: "Booking not found"
@@ -132,14 +134,16 @@ exports.cancelBooking = async (req, res, next) => {
       });
     }
 
-    // Cancel booking
+    console.log('Booking status before cancel:', booking.status);
     await booking.cancel();
+    console.log('Booking cancelled successfully in model method.');
 
     res.json({
       success: true,
       message: "Booking cancelled successfully"
     });
   } catch (err) {
+    console.error('Error in cancelBooking controller:', err);
     next(err);
   }
 };
