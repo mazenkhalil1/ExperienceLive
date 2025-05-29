@@ -1,486 +1,260 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../services/axiosConfig';
-import { showToast } from '../shared/Toast';
-import Loader from '../shared/Loader';
-import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 
 const EventForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     date: '',
-    time: '',
     location: '',
-    category: '',
     price: '',
     totalTickets: '',
-    image: null,
-    imageUrl: ''
+    category: '',
+    image: '',
+    ticketsAvailable: ''
   });
-  const [formErrors, setFormErrors] = useState({});
-  const [imagePreview, setImagePreview] = useState('');
 
-  const validateForm = () => {
-    const errors = {};
-    const now = new Date();
-    const eventDate = new Date(formData.date + 'T' + formData.time);
+  const [originalData, setOriginalData] = useState(null);
+  const isEditing = !!id;
 
-    if (!id) {
-      // Validate all fields for new events
-      if (!formData.title?.trim()) errors.title = 'Title is required';
-      if (!formData.description?.trim()) errors.description = 'Description is required';
-      if (!formData.category) errors.category = 'Category is required';
-      if (!formData.price || parseFloat(formData.price) < 0) errors.price = 'Valid price is required';
-      if (!formData.image) errors.image = 'Image is required';
-    }
-
-    // Always validate editable fields (for both new and edit)
-    if (!formData.date) errors.date = 'Date is required';
-    if (!formData.time) errors.time = 'Time is required';
-    if (formData.date && formData.time && eventDate <= now) errors.date = 'Event date must be in the future';
-    if (!formData.location?.trim()) errors.location = 'Location is required';
-    if (!formData.totalTickets || parseInt(formData.totalTickets) < 1) {
-      errors.totalTickets = 'Minimum 1 ticket required';
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const fetchEventDetails = useCallback(async () => {
-    if (!id) return;
-
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get(`/events/${id}`);
-      const eventData = response.data.data;
-      
-      // Format date and time from ISO string
-      const dateTime = new Date(eventData.date);
-      const formattedDate = dateTime.toISOString().split('T')[0];
-      const formattedTime = eventData.time || dateTime.toTimeString().slice(0, 5);
-
-      setFormData({
-        title: eventData.title,
-        description: eventData.description,
-        date: formattedDate,
-        time: formattedTime,
-        location: eventData.location,
-        category: eventData.category,
-        price: eventData.price,
-        totalTickets: eventData.totalTickets,
-        image: null,
-        imageUrl: eventData.image
-      });
-      setImagePreview(eventData.image);
-    } catch (err) {
-      console.error('Error fetching event:', err);
-      setError(err.response?.data?.message || 'Failed to fetch event details');
-      showToast.error(err.response?.data?.message || 'Failed to fetch event details');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (isEditing) {
+      axiosInstance.get(`/events/${id}`)
+        .then((res) => {
+          const { title, description, date, location, price, totalTickets, category, image, remainingTickets } = res.data.data;
+          const initialData = { 
+            title, 
+            description, 
+            date, 
+            location, 
+            price, 
+            totalTickets, 
+            category, 
+            image,
+            ticketsAvailable: remainingTickets 
+          };
+          setFormData(initialData);
+          setOriginalData(initialData);
+        })
+        .catch(() => toast.error('Failed to load event for editing.'));
     }
   }, [id]);
 
-  useEffect(() => {
-      fetchEventDetails();
-  }, [fetchEventDetails]);
-
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
-
-    if (type === 'file') {
-      const file = files[0];
-      setFormData(prev => ({
-        ...prev,
-        [name]: file
-      }));
-      if (file) {
-        setImagePreview(URL.createObjectURL(file));
-      } else {
-        setImagePreview(formData.imageUrl || '');
-      }
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-
-    // Clear error when user starts typing or selects a file
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      showToast.error('Please fix the errors in the form');
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null); // Clear previous server errors
-    
-    const data = new FormData(); // Use FormData again
-    // Append fields to FormData
-    data.append('title', formData.title);
-    data.append('description', formData.description);
-    data.append('date', new Date(formData.date + 'T' + formData.time).toISOString());
-    data.append('location', formData.location);
-    data.append('category', formData.category);
-    data.append('price', parseFloat(formData.price));
-    data.append('totalTickets', parseInt(formData.totalTickets));
-
-    // Handle image upload as base64 string asynchronously
-    if (formData.image instanceof File) {
-      try {
-        const base64Image = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(formData.image);
-        });
-        data.append('image', base64Image); // Append base64 string to FormData
-      } catch (error) {
-        console.error('Error reading file:', error);
-        showToast.error('Failed to read image file.');
-        setSubmitting(false);
-        return; // Stop submission if file reading fails
-      }
-    } else if (id && formData.imageUrl) {
-      // If editing and no new file selected, send existing image URL
-      data.append('imageUrl', formData.imageUrl);
-    } else if (!id && !formData.image) {
-      // If creating and no image selected (and image is required by frontend validation)
-       showToast.error('Image is required.');
-       setSubmitting(false);
-       return;
-    }
-
-    // Determine URL and method
-    const url = id ? `/events/${id}` : '/events';
-    const method = id ? 'put' : 'post';
 
     try {
-      // Send data as FormData
-      const response = await axiosInstance[method](url, data, {
-         headers: { 'Content-Type': 'multipart/form-data' } // Explicitly set multipart for FormData
-      });
-      
-      if (!response.data || !response.data.success) {
-        throw new Error(response.data?.message || 'Failed to save event');
+      if (isEditing) {
+        // For editing, only send fields that have changed
+        const allowedFields = ['date', 'location', 'ticketsAvailable'];
+        const changedFields = Object.entries(formData)
+          .filter(([key, value]) => 
+            allowedFields.includes(key) && 
+            value !== originalData[key]
+          );
+        
+        if (changedFields.length === 0) {
+          toast.info('No changes detected');
+          navigate('/my-events');
+          return;
+        }
+
+        const filteredData = Object.fromEntries(changedFields);
+        await axiosInstance.put(`/events/${id}`, filteredData);
+        toast.success('Event updated successfully!');
+      } else {
+        // For creating, send all required fields
+        await axiosInstance.post('/events', formData);
+        toast.success('Event created successfully!');
       }
 
-      showToast.success(id ? 'Event updated successfully!' : 'Event created successfully!');
-      
-      setTimeout(() => {
-        navigate('/organizer/events');
-      }, 1000);
-    } catch (err) {
-      console.error('Error saving event:', err);
-      // Check if the error response contains specific validation errors
-      if (err.response?.data?.errors) {
-         // Assuming backend sends errors in an array with 'field' and 'message'
-         const backendErrors = {};
-         err.response.data.errors.forEach(err => {
-            backendErrors[err.field] = err.message;
-         });
-         setFormErrors(prevErrors => ({ ...prevErrors, ...backendErrors }));
-         showToast.error(err.response.data.message || 'Validation Error');
-      } else {
-         showToast.error(err.response?.data?.message || 'Failed to save event');
-      }
-    } finally {
-      setSubmitting(false);
+      navigate('/my-events');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Something went wrong');
     }
   };
 
-  useEffect(() => {
-    // Clean up the object URL when the component unmounts or imagePreview changes
-    return () => {
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [imagePreview]);
-
-  if (loading) {
+  const renderInput = (name, label, type = 'text', placeholder, required = true, disabled = false) => {
+    const hasChanged = isEditing && formData[name] !== originalData?.[name];
     return (
-      <div className="container mx-auto px-4 py-8 min-h-screen-except-nav-footer flex items-center justify-center">
-        <Loader type="spinner" size="large" text={id ? "Loading event for editing..." : "Loading form..."} />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {label}
+          {hasChanged && <span className="text-blue-500 ml-2">(Modified)</span>}
+        </label>
+        <input
+          name={name}
+          type={type}
+          value={formData[name]}
+          onChange={handleChange}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+            disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+          } ${hasChanged ? 'border-blue-500' : ''}`}
+        />
       </div>
     );
-  }
+  };
+
+  const renderTextarea = (name, label, placeholder, required = true, disabled = false) => {
+    const hasChanged = isEditing && formData[name] !== originalData?.[name];
+    return (
+      <div className="col-span-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {label}
+          {hasChanged && <span className="text-blue-500 ml-2">(Modified)</span>}
+        </label>
+        <textarea
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          rows="4"
+          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+            disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+          } ${hasChanged ? 'border-blue-500' : ''}`}
+        />
+      </div>
+    );
+  };
 
   return (
-    <motion.div 
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       className="container mx-auto px-4 py-8 min-h-screen-except-nav-footer"
-    >
-      <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-            {id ? 'Edit Event' : 'Create New Event'}
-          </h2>
-          <button
-            onClick={() => navigate('/organizer/events')}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 transition-colors duration-200"
-          >
-            Cancel
-          </button>
-        </div>
-
-      {error && (
-        <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
-          {error}
-        </div>
-      )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-              disabled={!!id}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 disabled:opacity-60 disabled:cursor-not-allowed ${
-                formErrors.title ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
-              placeholder="Enter event title"
-            />
-            {formErrors.title && (
-              <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.title}</p>
-            )}
-        </div>
-
-        <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description <span className="text-red-500">*</span></label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-              disabled={!!id}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 disabled:opacity-60 disabled:cursor-not-allowed ${
-                formErrors.description ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
-            rows="4"
-              placeholder="Enter event description"
-          />
-            {formErrors.description && (
-              <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.description}</p>
-            )}
-        </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date <span className="text-red-500">*</span></label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-                min={new Date().toISOString().split('T')[0]}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${formErrors.date ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-              />
-              {formErrors.date && (
-                <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.date}</p>
-              )}
-          </div>
-          <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time <span className="text-red-500">*</span></label>
-            <input
-              type="time"
-              name="time"
-              value={formData.time}
-              onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${formErrors.time ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-            />
-              {formErrors.time && (
-                <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.time}</p>
-              )}
-            </div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-gray-800">
+              {isEditing ? 'Edit Event' : 'Create New Event'}
+            </h2>
+            <button
+              onClick={() => navigate('/my-events')}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
-        <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 ${formErrors.location ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-              placeholder="Enter event location"
-            />
-            {formErrors.location && (
-              <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.location}</p>
-            )}
-        </div>
-
-        <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-              disabled={!!id}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 disabled:opacity-60 disabled:cursor-not-allowed ${formErrors.category ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-              placeholder="Enter event category"
-            />
-            {formErrors.category && (
-              <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.category}</p>
-            )}
-        </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price <span className="text-red-500">*</span></label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-                disabled={!!id}
-              min="0"
-                step="0.01"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 disabled:opacity-60 disabled:cursor-not-allowed ${formErrors.price ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                placeholder="Enter price"
-              />
-              {formErrors.price && (
-                <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.price}</p>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Title Field */}
+              {renderInput(
+                'title',
+                'Event Title',
+                'text',
+                'Enter event title',
+                true,
+                isEditing
               )}
-          </div>
-          <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Tickets <span className="text-red-500">*</span></label>
-            <input
-              type="number"
-              name="totalTickets"
-              value={formData.totalTickets}
-              onChange={handleChange}
-              min="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 ${formErrors.totalTickets ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                placeholder="Enter total tickets"
-            />
-              {formErrors.totalTickets && (
-                <p className="mt-1 text-sm text-red-500 dark:text-red-400">{formErrors.totalTickets}</p>
+
+              {/* Description Field */}
+              {renderTextarea(
+                'description',
+                'Description',
+                'Enter event description',
+                true,
+                isEditing
+              )}
+
+              {/* Date Field */}
+              {renderInput(
+                'date',
+                'Event Date',
+                'date',
+                '',
+                !isEditing,
+                false
+              )}
+
+              {/* Location Field */}
+              {renderInput(
+                'location',
+                'Location',
+                'text',
+                'Enter event location',
+                !isEditing,
+                false
+              )}
+
+              {/* Total Tickets Field */}
+              {renderInput(
+                'totalTickets',
+                'Total Tickets',
+                'number',
+                'Enter total number of tickets',
+                true,
+                isEditing
+              )}
+
+              {/* Available Tickets Field */}
+              {renderInput(
+                'ticketsAvailable',
+                'Available Tickets',
+                'number',
+                'Enter available tickets',
+                !isEditing,
+                false
+              )}
+
+              {/* Price Field */}
+              {renderInput(
+                'price',
+                'Ticket Price ($)',
+                'number',
+                'Enter ticket price',
+                true,
+                isEditing
+              )}
+
+              {/* Category Field */}
+              {renderInput(
+                'category',
+                'Category',
+                'text',
+                'Enter event category',
+                false,
+                isEditing
+              )}
+
+              {/* Image URL Field */}
+              {renderInput(
+                'image',
+                'Image URL',
+                'text',
+                'Enter image URL',
+                false,
+                isEditing
               )}
             </div>
-          </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Event Image
-          </label>
-          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg">
-            <div className="space-y-1 text-center">
-              {imagePreview ? (
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Event preview"
-                    className="mx-auto h-64 w-auto object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImagePreview('');
-                      setFormData(prev => ({ ...prev, image: null, imageUrl: '' }));
-                    }}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-              <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                <label
-                  htmlFor="image"
-                  className="relative cursor-pointer bg-white dark:bg-gray-700 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                >
-                  <span>Upload a file</span>
-                  <input
-                    id="image"
-                    name="image"
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={handleChange}
-                  />
-                </label>
-                <p className="pl-1">or drag and drop</p>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                PNG, JPG, GIF up to 10MB
-              </p>
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <button
+                type="submit"
+                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                {isEditing ? 'Update Event' : 'Create Event'}
+              </button>
             </div>
-          </div>
-          {formErrors.image && (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{formErrors.image}</p>
-          )}
+          </form>
         </div>
-
-        <div className="mt-6">
-          <motion.button
-            type="submit"
-            disabled={submitting}
-            className={`w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md
-                       hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500
-                       disabled:opacity-50 disabled:cursor-not-allowed
-                       dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600
-                       transition-colors duration-200
-                       ${submitting ? 'flex items-center justify-center' : ''}`}
-             whileHover={{ scale: submitting ? 1 : 1.02 }}
-             whileTap={{ scale: submitting ? 1 : 0.98 }}
-          >
-            {submitting ? (
-              <>
-                <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l2-2.647z"></path>
-                </svg>
-                Saving...
-              </>
-            ) : (
-              id ? 'Update Event' : 'Create Event'
-            )}
-          </motion.button>
-        </div>
-      </form>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-export default EventForm; 
+export default EventForm;
