@@ -4,6 +4,11 @@ import axiosInstance from '../../services/axiosConfig';
 import { showToast } from '../shared/Toast';
 import Loader from '../shared/Loader';
 import { motion, AnimatePresence } from 'framer-motion';
+import Modal from 'react-modal';
+import { toast } from 'react-toastify';
+
+// Set app element for react-modal (important for accessibility)
+Modal.setAppElement('#root'); // Assuming your root element has id='root'
 
 const MyEventsPage = () => {
   const navigate = useNavigate();
@@ -15,6 +20,8 @@ const MyEventsPage = () => {
     search: '',
     sortBy: 'date'
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [eventToDeleteId, setEventToDeleteId] = useState(null);
 
   const fetchMyEvents = useCallback(async () => {
     try {
@@ -50,6 +57,31 @@ const MyEventsPage = () => {
     } catch (err) {
       console.error('Error deleting event:', err);
       showToast.error(err.response?.data?.message || 'Failed to delete event');
+    }
+  };
+
+  const openDeleteModal = (eventId) => {
+    setEventToDeleteId(eventId);
+    setIsModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setEventToDeleteId(null);
+    setIsModalOpen(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDeleteId) return;
+
+    try {
+      await axiosInstance.delete(`/events/${eventToDeleteId}`);
+      toast.success('Event deleted successfully!');
+      setEvents(events.filter(event => event._id !== eventToDeleteId));
+      closeDeleteModal();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete event.');
+      closeDeleteModal();
     }
   };
 
@@ -217,7 +249,7 @@ const MyEventsPage = () => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(event._id)}
+                        onClick={() => openDeleteModal(event._id)}
                         className="text-red-600 dark:text-red-400 hover:underline transition-colors duration-200"
                       >
                         Delete
@@ -231,6 +263,33 @@ const MyEventsPage = () => {
            </motion.div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={closeDeleteModal}
+        className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+      >
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Confirm Deletion</h2>
+          <p className="text-gray-600 mb-6">Are you sure you want to delete this event? This action cannot be undone.</p>
+          <div className="flex justify-end space-x-4">
+            <button
+              onClick={closeDeleteModal}
+              className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 };

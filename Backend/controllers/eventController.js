@@ -137,20 +137,26 @@ exports.getEvent = async (req, res, next) => {
 // Update event
 exports.updateEvent = async (req, res, next) => {
   try {
+    console.log('=== Update Event Start ===');
+    console.log('Request Body:', req.body);
     let event = await Event.findById(req.params.id);
 
     if (!event) {
+      console.log('Event not found');
       return res.status(404).json({
         success: false,
         message: "Event not found"
       });
     }
 
+    console.log('Event Before Update:', event);
+
     // Organizers can only update their own events
     const isOrganizer = event.organizer.toString() === req.user.userId;
     const isAdmin = req.user.role === "admin";
 
     if (!isOrganizer && !isAdmin) {
+      console.log('Not authorized');
       return res.status(403).json({
         success: false,
         message: "Not authorized to update this event"
@@ -169,6 +175,7 @@ exports.updateEvent = async (req, res, next) => {
         : requestedFields.every(field => organizerFields.includes(field));
 
     if (!isAllowed) {
+      console.log('Requested fields not allowed');
       return res.status(403).json({
         success: false,
         message: "Not authorized to update the requested fields"
@@ -177,7 +184,19 @@ exports.updateEvent = async (req, res, next) => {
 
     // Perform the update
     const updates = requestedFields.reduce((obj, key) => {
-      obj[key] = req.body[key];
+      // Special handling for ticketsAvailable
+      if (key === 'ticketsAvailable' && !isAdmin) {
+        // Calculate the difference and update remainingTickets
+        const newTicketsAvailable = parseInt(req.body.ticketsAvailable, 10);
+        const currentRemainingTickets = event.remainingTickets;
+        const difference = newTicketsAvailable - currentRemainingTickets;
+        // Ensure remainingTickets doesn't go below zero
+        event.remainingTickets = Math.max(0, currentRemainingTickets + difference);
+        // Do NOT add ticketsAvailable to the updates object for Mongoose
+      } else {
+        // For other fields or admin, add directly to updates
+        obj[key] = req.body[key];
+      }
       return obj;
     }, {});
 
@@ -186,19 +205,39 @@ exports.updateEvent = async (req, res, next) => {
       updates.image = req.body.image;
     }
 
-    event = await Event.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-      runValidators: true
-    });
+    console.log('Updates object for Mongoose:', updates);
+    console.log('Keys in updates object:', Object.keys(updates).length);
+
+    // Determine if ticketsAvailable was the only field changed by an organizer
+    const onlyTicketsAvailableChanged = requestedFields.length === 1 && requestedFields[0] === 'ticketsAvailable' && !isAdmin;
+
+    if (Object.keys(updates).length > 0) {
+       console.log('Calling findByIdAndUpdate with updates');
+       event = await Event.findByIdAndUpdate(req.params.id, updates, {
+         new: true,
+         runValidators: true
+       });
+       console.log('findByIdAndUpdate Result:', event);
+    } else if (onlyTicketsAvailableChanged) {
+       // If only ticketsAvailable was changed by an organizer, the remainingTickets was updated directly on the event object
+       console.log('Only ticketsAvailable changed by organizer, calling event.save() to persist remainingTickets update');
+       await event.save();
+       console.log('event.save() called');
+    } else {
+      console.log('No other changes to update via findByIdAndUpdate, and ticketsAvailable was not the only field or was not changed by organizer');
+    }
 
     res.json({
       success: true,
       data: event
     });
+    console.log('=== Update Event End ===');
   } catch (err) {
+    console.error('Update event error:', err);
     next(err);
   }
 };
+
 // Delete event
 exports.deleteEvent = async (req, res, next) => {
   try {
