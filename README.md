@@ -130,8 +130,11 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 
 ## 👥 Authors
 
-- Your Name - Initial work
-
+- Mohamed AlGengeihy 
+- Malak Meabed
+- Zeina Abdelrahman
+- Farah Sherif
+- Mazen Saed
 ## 🙏 Acknowledgments
 
 - Thanks to all contributors who have helped shape this project
@@ -139,8 +142,6 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 
 ## 📞 Support
 
-For support, email your-email@example.com or open an issue in the repository.
+For support, email mohamed.gengeihy@gmail.com or open an issue in the repository.
 
 ---
-
-Made with ❤️ by [Your Name] 
