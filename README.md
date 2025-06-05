@@ -1,10 +1,10 @@
-# ExperienceLive - Modern Event Ticketing System 🎫
+# ExperienceLive - Modern Event Ticketing System 
 
 ExperienceLive is a full-stack web application that provides a seamless platform for event ticketing and management. Built with modern technologies, it offers a robust solution for event organizers and attendees alike.
 
 ![ExperienceLive Banner](https://via.placeholder.com/1200x400?text=ExperienceLive)
 
-## 🌟 Features
+##  Features
 
 - **User Authentication & Authorization**
   - Secure login and registration system
@@ -44,7 +44,7 @@ ExperienceLive is a full-stack web application that provides a seamless platform
 - Nodemailer
 - Multer
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Node.js (v14 or higher)
@@ -90,7 +90,7 @@ cd Front-End
 npm start
 ```
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 ExperienceLive/
@@ -106,7 +106,7 @@ ExperienceLive/
 └── README.md
 ```
 
-## 🔒 Security Features
+##  Security Features
 
 - Password hashing using bcrypt
 - JWT token-based authentication
@@ -114,7 +114,7 @@ ExperienceLive/
 - Secure cookie handling
 - Input validation and sanitization
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -124,24 +124,23 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
+##  License
 
 This project is licensed under the ISC License - see the LICENSE file for details.
 
-## 👥 Authors
-
+##  Authors
+- Mazen Saed
 - Mohamed AlGengeihy 
 - Malak Meabed
 - Zeina Abdelrahman
 - Farah Sherif
-- Mazen Saed
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Thanks to all contributors who have helped shape this project
 - Special thanks to the open-source community
 
-## 📞 Support
+##  Support
 
-For support, email mohamed.gengeihy@gmail.com or open an issue in the repository.
+For support, email mazensaed04@gmaill.com or open an issue in the repository.
 
 ---
