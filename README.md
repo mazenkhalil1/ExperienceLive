@@ -26,7 +26,7 @@ ExperienceLive is a full-stack web application that provides a seamless platform
   - User management
   - Sales reports
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 - React.js
